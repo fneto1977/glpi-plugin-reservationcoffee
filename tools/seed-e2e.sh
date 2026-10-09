@@ -17,8 +17,14 @@ set +a
 output_dir="${repo_root}/e2e/.auth"
 mkdir -p "${output_dir}"
 
-docker compose --env-file "${env_file}" -f "${repo_root}/docker/compose.e2e.yml" \
-    exec -T -u www-data \
+compose=(docker compose --env-file "${env_file}" -f "${repo_root}/docker/compose.e2e.yml")
+
+# Per-user timezones (E2E-20) need GLPI timezone support, which reads mysql.time_zone_name.
+"${compose[@]}" exec -T -e MYSQL_PWD="${E2E_DB_ROOT_PASSWORD}" db \
+    mariadb -uroot -e "GRANT SELECT ON mysql.time_zone_name TO 'glpi'@'%';"
+"${compose[@]}" exec -T -u www-data glpi bin/console database:enable_timezones --no-interaction >/dev/null
+
+"${compose[@]}" exec -T -u www-data \
     -e E2E_PASSWORD_SELFSERVICE \
     -e E2E_PASSWORD_SELFSERVICE2 \
     -e E2E_PASSWORD_TECH \
