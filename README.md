@@ -150,6 +150,7 @@ cd e2e && npm ci && npx playwright install chromium && npx playwright test
 - **Pacote:** `tools/package.sh` gera `dist/reservationcoffee-<versão>.zip`.
 - **Homologação do pacote:** `tools/homologate-package.sh` roda a suíte E2E contra esse pacote, e não contra o código-fonte.
 - **Outra versão do GLPI:** a stack aceita `E2E_GLPI_VERSION`. Para rodá-la ao lado da padrão, use outro projeto e outra porta, por exemplo `COMPOSE_PROJECT_NAME=rc-glpi-1104 E2E_GLPI_VERSION=11.0.4 E2E_HTTP_PORT=8092 tools/e2e-up.sh`, com as mesmas variáveis nos comandos de teste. A CI roda integração e E2E em 11.0.4 e 11.0.11.
+- **Servidor de homologação remoto:** `tools/remote-e2e.sh` roda a mesma suíte contra um GLPI acessado por SSH (nunca produção), com o plugin já instalado e ativo. `prepare` copia os helpers para `/tmp/rc-e2e` no servidor, `seed` cria usuários, entidade e Form usando reservas existentes (`E2E_SEED_ROOM_ITEMS` e `E2E_SEED_NON_ROOM_ITEM`), `test` roda o Playwright e `teardown` remove os helpers. Os endereços e caminhos do servidor vêm de variáveis de ambiente descritas no cabeçalho do script; as senhas dos usuários E2E vêm do `.env` local. O seed não é desfeito automaticamente: remova os dados de teste ao final.
 
 ## Compatibilidade entre versões do GLPI 11.0
 
@@ -157,6 +158,7 @@ cd e2e && npm ci && npx playwright install chromium && npx playwright test
 - **Custo:** na 11.0.4, abrir uma agenda pelo link "Ver planejamento" também gera uma consulta a `/pending`. É um GET leve, que só lê a sessão e responde `204` quando não há oferta; nada é gravado e não há redirecionamento.
 - **Rotas de ação:** na 11.0.4 o router de plugins casa as rotas como se toda requisição fosse GET. Por isso "Solicitar" e "Não" não declaram restrição de método na rota: o controller exige POST (GET recebe `405`) e o core continua validando o token CSRF no POST.
 - **Fuso pessoal do usuário (limitação do core 11.0.4):** a 11.0.4 só aplica o fuso definido nas preferências do usuário na sessão do banco durante o login. Nos requests seguintes, as datas digitadas são gravadas no fuso do servidor. O plugin avalia a reserva exatamente como o GLPI a gravou. Na 11.0.4, mantenha os usuários no fuso do servidor ou atualize para a 11.0.11. O teste E2E-20 é pulado nessa versão.
+- **Notificação de reserva com "grupo técnico do item" (core 11.0.4):** se uma notificação de reserva tiver como destinatário o grupo técnico responsável pelo item e o item reservável for um ativo personalizado sem grupo técnico, a 11.0.4 falha ao criar a reserva ("Empty IN are not allowed"), com ou sem este plugin. Defina um grupo técnico nesses ativos, remova esse destinatário da notificação ou atualize o GLPI.
 - **Pré-preenchimento do Form:** a 11.0.4 só pré-preenche perguntas cujo UUID não tenha `.`, como os gerados pelo editor de Forms atual.
 
 ## Limitações conhecidas e próximos passos (v2)
