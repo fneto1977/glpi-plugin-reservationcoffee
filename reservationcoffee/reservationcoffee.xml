@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <name>Reservation Coffee Break</name>
+    <key>reservationcoffee</key>
+    <state>stable</state>
+    <logo></logo>
+    <description>
+        <short>
+            <en>Offers the native "Coffee Break request" form right after a meeting room reservation, enforcing a 48-hour notice.</en>
+            <pt>Oferece o formulário nativo "Solicitação de Coffee Break" logo após a reserva de uma sala de reunião, exigindo 48 horas de antecedência.</pt>
+        </short>
+        <long>
+            <en>Keeps the native reservation calendar untouched. After a configured meeting room is reserved, the user is offered to open the native coffee break form; the 48-hour rule is validated on the server, including on direct form submissions.</en>
+            <pt>Preserva o calendário nativo de reservas. Após a reserva de uma sala configurada, o usuário pode abrir o formulário nativo de Coffee Break; a regra de 48 horas é validada no servidor, inclusive em envios diretos do formulário.</pt>
+        </long>
+    </description>
+    <homepage>https://github.com/fneto1977/glpi-plugin-reservationcoffee</homepage>
+    <download>https://github.com/fneto1977/glpi-plugin-reservationcoffee/releases</download>
+    <issues>https://github.com/fneto1977/glpi-plugin-reservationcoffee/issues</issues>
+    <readme>https://github.com/fneto1977/glpi-plugin-reservationcoffee/blob/main/README.md</readme>
+    <authors>
+        <author>Equipe interna</author>
+    </authors>
+    <versions>
+        <version>
+            <num>0.1.0</num>
+            <compatibility>~11.0.11</compatibility>
+        </version>
+    </versions>
+    <langs>
+        <lang>pt_BR</lang>
+        <lang>en_GB</lang>
+        <lang>es_ES</lang>
+    </langs>
+    <license>GPLv3+</license>
+    <tags>
+        <en>
+            <tag>reservation</tag>
+            <tag>form</tag>
+        </en>
+        <pt>
+            <tag>reserva</tag>
+            <tag>formulário</tag>
+        </pt>
+    </tags>
+</root>

@@ -1,0 +1,38 @@
+{
+    "name": "fneto1977/glpi-plugin-reservationcoffee",
+    "description": "GLPI 11 microplugin: offers the native coffee break form after a meeting room reservation.",
+    "type": "glpi-plugin",
+    "license": "GPL-3.0-or-later",
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "GlpiPlugin\\Reservationcoffee\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GlpiPlugin\\Reservationcoffee\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2.0"
+        }
+    },
+    "scripts": {
+        "lint": "find setup.php hook.php src tests -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "cs": "php-cs-fixer check --diff",
+        "cs-fix": "php-cs-fixer fix",
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "test": "phpunit --testsuite unit"
+    }
+}
