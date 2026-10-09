@@ -15,6 +15,7 @@ concurrency:
 
 env:
   GLPI_VERSION: 11.0.11
+  GLPI_MIN_VERSION: 11.0.4
 
 jobs:
   php:
@@ -54,6 +55,13 @@ jobs:
       - name: PHPStan
         run: composer phpstan -- --no-progress
 
+      - name: PHPStan against the minimum supported GLPI (${{ env.GLPI_MIN_VERSION }})
+        if: matrix.php == '8.2'
+        run: |
+          mkdir -p "${RUNNER_TEMP}/glpi-min"
+          curl -fsSL "https://github.com/glpi-project/glpi/releases/download/${GLPI_MIN_VERSION}/glpi-${GLPI_MIN_VERSION}.tgz" | tar -xz -C "${RUNNER_TEMP}/glpi-min"
+          GLPI_SOURCE_DIR="${RUNNER_TEMP}/glpi-min/glpi" composer phpstan -- --no-progress
+
       - name: Coding style
         if: matrix.php == '8.2'
         run: composer cs
@@ -89,10 +97,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   e2e:
-    name: E2E
+    name: E2E (GLPI ${{ matrix.glpi }})
     needs: [php, locales]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        glpi: ['11.0.4', '11.0.11']
+    env:
+      E2E_GLPI_VERSION: ${{ matrix.glpi }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -129,7 +143,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-glpi-${{ matrix.glpi }}
           path: |
             e2e/playwright-report
             e2e/test-results
