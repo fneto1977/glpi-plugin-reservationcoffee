@@ -52,13 +52,15 @@ final class Config
     public const MAX_PENDING_TTL_SECONDS     = 3600;
 
     /**
-     * @param list<int> $reservableItemIds IDs of `ReservationItem` rows (not of the underlying assets)
+     * @param list<int>    $reservableItemIds IDs of `ReservationItem` rows (not of the underlying assets)
+     * @param list<string> $invalidKeys       keys holding a value that could not be parsed
      */
     public function __construct(
         public readonly array $reservableItemIds,
         public readonly int $coffeeFormId,
         public readonly int $reservationQuestionId,
         public readonly int $pendingTtlSeconds,
+        public readonly array $invalidKeys = [],
     ) {}
 
     public static function load(): self
@@ -67,15 +69,38 @@ final class Config
     }
 
     /**
+     * Invalid values never enable anything: a malformed item list or ID
+     * disables the related behaviour as a whole (fail closed).
+     *
      * @param array<string, mixed> $raw
      */
     public static function fromRaw(array $raw): self
     {
+        $invalid = [];
+
+        $itemIds = self::parseIdList($raw[self::KEY_RESERVABLE_ITEM_IDS] ?? null);
+        if ($itemIds === null) {
+            $invalid[] = self::KEY_RESERVABLE_ITEM_IDS;
+        }
+        $formId = self::parseOptionalId($raw[self::KEY_COFFEE_FORM_ID] ?? null);
+        if ($formId === null) {
+            $invalid[] = self::KEY_COFFEE_FORM_ID;
+        }
+        $questionId = self::parseOptionalId($raw[self::KEY_RESERVATION_QUESTION_ID] ?? null);
+        if ($questionId === null) {
+            $invalid[] = self::KEY_RESERVATION_QUESTION_ID;
+        }
+        $ttl = self::parseTtl($raw[self::KEY_PENDING_TTL_SECONDS] ?? null);
+        if ($ttl === null) {
+            $invalid[] = self::KEY_PENDING_TTL_SECONDS;
+        }
+
         return new self(
-            self::parseIdList((string) ($raw[self::KEY_RESERVABLE_ITEM_IDS] ?? '')),
-            self::parsePositiveInt($raw[self::KEY_COFFEE_FORM_ID] ?? null),
-            self::parsePositiveInt($raw[self::KEY_RESERVATION_QUESTION_ID] ?? null),
-            self::parseTtl($raw[self::KEY_PENDING_TTL_SECONDS] ?? null),
+            $itemIds ?? [],
+            $formId ?? 0,
+            $questionId ?? 0,
+            $ttl ?? self::DEFAULT_PENDING_TTL_SECONDS,
+            $invalid,
         );
     }
 
@@ -121,40 +146,64 @@ final class Config
     }
 
     /**
-     * @return list<int>
+     * @return list<int>|null empty list when unset, null when malformed
      */
-    private static function parseIdList(string $value): array
+    private static function parseIdList(mixed $value): ?array
     {
+        if (self::isUnset($value)) {
+            return [];
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
         $ids = [];
         foreach (explode(',', $value) as $part) {
             $id = self::parsePositiveInt(trim($part));
-            if ($id > 0) {
-                $ids[] = $id;
+            if ($id === null) {
+                return null;
             }
+            $ids[] = $id;
         }
 
         return array_values(array_unique($ids));
     }
 
-    private static function parsePositiveInt(mixed $value): int
+    /**
+     * @return int|null 0 when unset, null when malformed
+     */
+    private static function parseOptionalId(mixed $value): ?int
     {
-        if (is_int($value)) {
-            return max(0, $value);
-        }
-        if (!is_string($value) || preg_match('/^\d{1,10}$/', $value) !== 1) {
-            return 0;
-        }
-
-        return (int) $value;
+        return self::isUnset($value) ? 0 : self::parsePositiveInt($value);
     }
 
-    private static function parseTtl(mixed $value): int
+    /**
+     * @return int|null clamped TTL, the default when unset, null when malformed
+     */
+    private static function parseTtl(mixed $value): ?int
     {
-        $ttl = self::parsePositiveInt($value);
-        if ($ttl === 0) {
+        if (self::isUnset($value)) {
             return self::DEFAULT_PENDING_TTL_SECONDS;
         }
+        $ttl = self::parsePositiveInt($value);
 
-        return min(self::MAX_PENDING_TTL_SECONDS, max(self::MIN_PENDING_TTL_SECONDS, $ttl));
+        return $ttl === null ? null : min(self::MAX_PENDING_TTL_SECONDS, max(self::MIN_PENDING_TTL_SECONDS, $ttl));
+    }
+
+    private static function isUnset(mixed $value): bool
+    {
+        return $value === null || (is_string($value) && trim($value) === '');
+    }
+
+    private static function parsePositiveInt(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value > 0 ? $value : null;
+        }
+        if (!is_string($value) || preg_match('/^[1-9]\d{0,9}$/', trim($value)) !== 1) {
+            return null;
+        }
+
+        return (int) trim($value);
     }
 }

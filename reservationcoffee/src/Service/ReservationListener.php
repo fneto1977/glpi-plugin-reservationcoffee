@@ -81,6 +81,12 @@ final class ReservationListener
 
         $reservationId = (int) $item->getID();
         try {
+            if ($this->config->invalidKeys !== []) {
+                $this->logger->warning('item_add_reservation', PluginLogger::CATEGORY_CONFIGURATION, [
+                    'reservation_id' => $reservationId,
+                    'invalid_keys'   => implode(',', $this->config->invalidKeys),
+                ]);
+            }
             if (!$this->config->isOfferEnabled() || !($this->isInteractiveRequest)()) {
                 return;
             }

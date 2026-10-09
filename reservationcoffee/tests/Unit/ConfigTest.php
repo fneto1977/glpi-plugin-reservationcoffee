@@ -3,6 +3,7 @@
 namespace GlpiPlugin\Reservationcoffee\Tests\Unit;
 
 use GlpiPlugin\Reservationcoffee\Config;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ConfigTest extends TestCase
@@ -36,18 +37,75 @@ final class ConfigTest extends TestCase
         self::assertSame(Config::DEFAULT_PENDING_TTL_SECONDS, $config->pendingTtlSeconds);
     }
 
-    public function testInvalidValuesAreDiscarded(): void
+    public function testMissingConfigurationIsNotReportedAsInvalid(): void
     {
         $config = Config::fromRaw([
-            Config::KEY_RESERVABLE_ITEM_IDS     => '12,abc,-3,0,12,1e3',
-            Config::KEY_COFFEE_FORM_ID          => '7; DROP TABLE',
-            Config::KEY_RESERVATION_QUESTION_ID => '-1',
+            Config::KEY_RESERVABLE_ITEM_IDS     => '',
+            Config::KEY_COFFEE_FORM_ID          => ' ',
+            Config::KEY_RESERVATION_QUESTION_ID => null,
+            Config::KEY_PENDING_TTL_SECONDS     => '',
         ]);
 
-        self::assertSame([12], $config->reservableItemIds);
+        self::assertSame([], $config->invalidKeys);
+    }
+
+    public function testInvalidValuesDisableTheFeatureAndAreReported(): void
+    {
+        $config = Config::fromRaw([
+            Config::KEY_RESERVABLE_ITEM_IDS     => '12,abc',
+            Config::KEY_COFFEE_FORM_ID          => '7; DROP TABLE',
+            Config::KEY_RESERVATION_QUESTION_ID => '-1',
+            Config::KEY_PENDING_TTL_SECONDS     => 'soon',
+        ]);
+
+        self::assertSame([], $config->reservableItemIds);
         self::assertSame(0, $config->coffeeFormId);
         self::assertSame(0, $config->reservationQuestionId);
+        self::assertSame(Config::DEFAULT_PENDING_TTL_SECONDS, $config->pendingTtlSeconds);
         self::assertFalse($config->isOfferEnabled());
+        self::assertFalse($config->isGuardEnabled());
+        self::assertSame(
+            [
+                Config::KEY_RESERVABLE_ITEM_IDS,
+                Config::KEY_COFFEE_FORM_ID,
+                Config::KEY_RESERVATION_QUESTION_ID,
+                Config::KEY_PENDING_TTL_SECONDS,
+            ],
+            $config->invalidKeys,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function malformedItemListProvider(): iterable
+    {
+        yield 'text' => ['12,abc'];
+        yield 'negative' => ['12,-3'];
+        yield 'zero' => ['0,12'];
+        yield 'exponent' => ['1e3'];
+        yield 'empty entry' => ['12,,13'];
+        yield 'trailing comma' => ['12,'];
+        yield 'leading zero' => ['012'];
+        yield 'too long' => ['12345678901'];
+    }
+
+    #[DataProvider('malformedItemListProvider')]
+    public function testAnyMalformedEntryDisablesTheWholeItemList(string $raw): void
+    {
+        $config = Config::fromRaw([
+            Config::KEY_RESERVABLE_ITEM_IDS => $raw,
+            Config::KEY_COFFEE_FORM_ID      => '7',
+        ]);
+
+        self::assertSame([], $config->reservableItemIds);
+        self::assertFalse($config->isOfferEnabled());
+        self::assertSame([Config::KEY_RESERVABLE_ITEM_IDS], $config->invalidKeys);
+    }
+
+    public function testDuplicatedItemsAreCollapsed(): void
+    {
+        self::assertSame([12, 13], Config::fromRaw([Config::KEY_RESERVABLE_ITEM_IDS => '12,13,12'])->reservableItemIds);
     }
 
     public function testTtlIsClamped(): void
