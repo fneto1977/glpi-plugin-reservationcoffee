@@ -19,6 +19,14 @@ export function glpiDateTime(instant: Date, timeZone: string = loadEnv().timezon
   }).format(instant);
 }
 
+/** "Date HH:MM" as GLPI displays it for a date format preference (0 = Y-m-d, 1 = d-m-Y, 2 = m-d-Y). */
+export function displayedDateTime(instant: Date, dateFormat: number, timeZone: string = loadEnv().timezone): string {
+  const [date, time] = glpiDateTime(instant, timeZone).split(' ');
+  const [year, month, day] = date.split('-');
+  const shown = dateFormat === 1 ? `${day}-${month}-${year}` : dateFormat === 2 ? `${month}-${day}-${year}` : date;
+  return `${shown} ${time.slice(0, 5)}`;
+}
+
 /** English weekday name ("Monday"...) of an instant in the server timezone, as used by GLPI periodicity fields. */
 export function weekdayName(instant: Date): string {
   return new Intl.DateTimeFormat('en-US', { timeZone: loadEnv().timezone, weekday: 'long' }).format(instant);

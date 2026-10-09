@@ -1,7 +1,7 @@
 import { test, expect, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
 import { seed } from '../support/seed';
-import { sql } from '../support/stack';
-import { DAY, HOUR, MINUTE, glpiDateTime, slotCeil, slotFloor, startIn } from '../support/time';
+import { glpiDateFormat, sql } from '../support/stack';
+import { DAY, HOUR, MINUTE, displayedDateTime, slotCeil, slotFloor, startIn } from '../support/time';
 
 const MIN_NOTICE = 48 * HOUR;
 
@@ -28,7 +28,7 @@ test.describe('Coffee break offer after a room reservation', () => {
 
       await expect(offerCard(page)).toHaveAttribute('data-state', 'eligible');
       await expect(page.getByTestId('reservationcoffee-room')).toHaveText(room.name);
-      await expect(page.getByTestId('reservationcoffee-period')).toContainText(glpiDateTime(begin).slice(0, 16));
+      await expect(page.getByTestId('reservationcoffee-period')).toContainText(displayedDateTime(begin, glpiDateFormat()));
       await expect(page.getByTestId('reservationcoffee-reservation-id')).toHaveText(String(reservationId));
       await expect(page.getByText('Deseja solicitar Coffee Break?')).toBeVisible();
       await expect(page.getByTestId('reservationcoffee-decline')).toHaveText('Não, voltar ao calendário');

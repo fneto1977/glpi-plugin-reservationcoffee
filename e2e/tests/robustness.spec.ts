@@ -1,8 +1,8 @@
 import { test, expect, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
 import { loadEnv } from '../support/env';
 import { seed } from '../support/seed';
-import { glpiAppliesUserTimezone, legacyApi, logCursor, setConfig, sql, withPluginConfig } from '../support/stack';
-import { DAY, HOUR, MINUTE, glpiDateTime, slotCeil, slotFloor, startIn } from '../support/time';
+import { getConfig, glpiAppliesUserTimezone, glpiDateFormat, legacyApi, logCursor, setConfig, sql, withPluginConfig } from '../support/stack';
+import { DAY, HOUR, MINUTE, displayedDateTime, glpiDateTime, slotCeil, slotFloor, startIn } from '../support/time';
 
 const MIN_NOTICE = 48 * HOUR;
 const ROOM = () => seed().rooms[0];
@@ -56,8 +56,9 @@ test.describe('Robustness', () => {
     const errors = logCursor('php-errors.log');
     const pluginLog = logCursor('reservationcoffee.log');
     const { login, password } = loadEnv().credentials.selfservice;
-    setConfig('core', 'enable_api', '1');
-    setConfig('core', 'enable_api_login_credentials', '1');
+    const apiSettings = ['enable_api', 'enable_api_login_credentials'];
+    const previousApi = apiSettings.map((key) => getConfig('core', key) ?? '0');
+    apiSettings.forEach((key) => setConfig('core', key, '1'));
     try {
       const auth = Buffer.from(`${login}:${password}`).toString('base64');
       const session = legacyApi('GET', 'initSession', { Authorization: `Basic ${auth}` });
@@ -84,8 +85,7 @@ test.describe('Robustness', () => {
       const reservationId = (created.body as { id: number }).id;
       expect(sql(`SELECT id FROM glpi_reservations WHERE id = ${reservationId}`)).toHaveLength(1);
     } finally {
-      setConfig('core', 'enable_api', '0');
-      setConfig('core', 'enable_api_login_credentials', '0');
+      apiSettings.forEach((key, index) => setConfig('core', key, previousApi[index]));
     }
     expect(withoutConsoleNoise(errors())).toBe('');
     expect(pluginLog()).toBe('');
@@ -147,7 +147,7 @@ test.describe('Robustness', () => {
       const reservationId = await reserveAndExpectOffer(page, ROOM().reservationitem_id, begin, { timeZone: userTimeZone });
 
       await expect(offerCard(page)).toHaveAttribute('data-state', 'eligible');
-      await expect(page.getByTestId('reservationcoffee-period')).toContainText(glpiDateTime(begin, userTimeZone).slice(0, 16));
+      await expect(page.getByTestId('reservationcoffee-period')).toContainText(displayedDateTime(begin, glpiDateFormat(), userTimeZone));
       const stored = sql(`SELECT UNIX_TIMESTAMP(begin) AS ts FROM glpi_reservations WHERE id = ${reservationId}`)[0].ts;
       expect(Number(stored) * 1000).toBe(begin.getTime());
     });
