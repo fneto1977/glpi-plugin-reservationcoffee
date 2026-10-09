@@ -8,7 +8,9 @@
  *     php /opt/reservationcoffee-tools/seed_e2e.php
  *
  * Prints a JSON document with the created IDs on stdout. Never run it against
- * a production database.
+ * a production database. For a remote homologation server (tools/remote-e2e.sh)
+ * E2E_GLPI_ROOT, E2E_SEED_ROOM_ITEMS and E2E_SEED_NON_ROOM_ITEM select the GLPI
+ * root and existing reservable items instead of creating synthetic ones.
  */
 
 declare(strict_types=1);
@@ -35,7 +37,7 @@ use Glpi\Form\Section;
 use Glpi\Form\Tag\AnswerTagProvider;
 use GlpiPlugin\Reservationcoffee\Config as PluginConfig;
 
-const GLPI_ROOT_DIR = '/var/www/glpi';
+define('GLPI_ROOT_DIR', getenv('E2E_GLPI_ROOT') ?: '/var/www/glpi');
 
 chdir(GLPI_ROOT_DIR);
 require GLPI_ROOT_DIR . '/vendor/autoload.php';
@@ -134,6 +136,42 @@ function seed_reservable_peripheral(string $name): array
     return ['asset_id' => $assetId, 'reservationitem_id' => $reservationItemId];
 }
 
+/**
+ * Uses an existing reservable item (remote homologation keeps its real rooms).
+ *
+ * @return array{name: string, asset_id: int, reservationitem_id: int}
+ */
+function seed_existing_reservable(int $reservationItemId): array
+{
+    $reservationItem = new ReservationItem();
+    if (!$reservationItem->getFromDB($reservationItemId) || !(bool) $reservationItem->fields['is_active']) {
+        throw new RuntimeException(sprintf('Active reservation item %d not found', $reservationItemId));
+    }
+    $asset = $reservationItem->getItem();
+    if (!$asset instanceof CommonDBTM) {
+        throw new RuntimeException(sprintf('Reservation item %d has no asset', $reservationItemId));
+    }
+
+    return [
+        'name'               => (string) $asset->fields['name'],
+        'asset_id'           => (int) $asset->getID(),
+        'reservationitem_id' => $reservationItemId,
+    ];
+}
+
+/**
+ * @return list<int>
+ */
+function seed_id_list(string $name): array
+{
+    $value = getenv($name);
+    if (!is_string($value) || trim($value) === '') {
+        return [];
+    }
+
+    return array_map('intval', explode(',', $value));
+}
+
 function seed_question(int $sectionId, string $name, string $type, int $rank, bool $mandatory): int
 {
     return seed_find_or_create(Question::class, [
@@ -148,11 +186,21 @@ function seed_question(int $sectionId, string $name, string $type, int $rank, bo
 
 $subEntityId = seed_find_or_create(Entity::class, ['name' => 'E2E Filial', 'entities_id' => 0]);
 
-$rooms = [];
-foreach (['Sala de Reunião 01', 'Sala de Reunião 02', 'Sala de Reunião 03', 'Sala de Reunião 04'] as $roomName) {
-    $rooms[] = ['name' => $roomName] + seed_reservable_peripheral($roomName);
+$existingRoomIds = seed_id_list('E2E_SEED_ROOM_ITEMS');
+$existingNonRoomIds = seed_id_list('E2E_SEED_NON_ROOM_ITEM');
+if ($existingRoomIds !== []) {
+    if (count($existingRoomIds) !== 4 || count($existingNonRoomIds) !== 1) {
+        throw new RuntimeException('E2E_SEED_ROOM_ITEMS needs 4 IDs and E2E_SEED_NON_ROOM_ITEM 1 ID');
+    }
+    $rooms = array_map('seed_existing_reservable', $existingRoomIds);
+    $nonRoom = seed_existing_reservable($existingNonRoomIds[0]);
+} else {
+    $rooms = [];
+    foreach (['Sala de Reunião 01', 'Sala de Reunião 02', 'Sala de Reunião 03', 'Sala de Reunião 04'] as $roomName) {
+        $rooms[] = ['name' => $roomName] + seed_reservable_peripheral($roomName);
+    }
+    $nonRoom = ['name' => 'Projetor Portátil E2E'] + seed_reservable_peripheral('Projetor Portátil E2E');
 }
-$nonRoom = ['name' => 'Projetor Portátil E2E'] + seed_reservable_peripheral('Projetor Portátil E2E');
 
 $selfServiceProfileId = seed_profile_id('Self-Service');
 $technicianProfileId  = seed_profile_id('Technician');
