@@ -1,0 +1,163 @@
+# Reservation Coffee Break (`reservationcoffee`)
+
+Microplugin para **GLPI 11.0.11+** que, logo após a reserva de uma sala de reunião, oferece ao usuário abrir o formulário nativo **"Solicitação de Coffee Break"**, exigindo **48 horas de antecedência** do início da reunião.
+
+O calendário e o formulário de reservas continuam 100% nativos. O plugin não altera o core do GLPI, não cria tabelas e pode ser desativado a qualquer momento sem deixar resíduos funcionais.
+
+## Como funciona
+
+1. O usuário reserva uma das salas configuradas pelo fluxo nativo do GLPI.
+2. O hook `item_add` de `Reservation` registra uma oferta pendente na sessão do usuário. A reserva nunca falha por causa do plugin.
+3. Na página para a qual o GLPI redireciona depois da reserva, um script do plugin consulta `GET /plugins/reservationcoffee/pending` e, se houver oferta, abre a tela intermediária `/plugins/reservationcoffee/offer/{id}`.
+4. A tela mostra a sala, o período e duas opções:
+   - **Não, voltar ao calendário**;
+   - **Solicitar Coffee Break**, que abre o Form nativo com o campo "ID da reserva" já preenchido.
+5. Com menos de 48 horas de antecedência, a tela só informa a indisponibilidade.
+6. A regra de 48 horas e a posse da reserva são **validadas de novo no servidor** quando o Form é enviado (hook `pre_item_add` de `Glpi\Form\AnswersSet`). Abrir o Form direto pelo catálogo de serviços não contorna a regra: o envio é recusado e nenhum chamado é criado.
+
+Reservas criadas pela API ou por linha de comando, edições e exclusões de reservas, e itens que não são salas configuradas seguem o comportamento nativo, sem oferta.
+
+## Requisitos
+
+- GLPI `>= 11.0.11` e `< 12.0.0`.
+- PHP `>= 8.2`, conforme o GLPI 11.
+- Recomendado: suporte a fusos horários do GLPI habilitado (`php bin/console database:enable_timezones`) quando houver usuários em fusos diferentes do servidor.
+
+## Instalação
+
+1. Baixe `reservationcoffee-<versão>.zip` e confira o `.sha256` publicado junto.
+2. Extraia o arquivo no diretório `plugins/` do GLPI. O resultado deve ser `plugins/reservationcoffee/setup.php`.
+3. Instale e ative:
+
+   ```bash
+   php bin/console plugin:install --username=<usuario-admin> reservationcoffee
+   php bin/console plugin:activate reservationcoffee
+   php bin/console cache:clear
+   ```
+
+Enquanto não for configurado (próxima seção), o plugin fica inerte: sem configuração válida, nada é oferecido (fail closed).
+
+## Configuração
+
+### 1. Formulário nativo de Coffee Break
+
+Crie pelo administrador de formulários do GLPI (Administração > Formulários) o Form **"Solicitação de Coffee Break"** com:
+
+| Pergunta | Tipo | Obrigatória |
+| --- | --- | --- |
+| ID da reserva | Número | Sim |
+| Quantidade de participantes | Número | Sim |
+| Horário desejado do Coffee Break | Texto curto | Sim |
+| Tipo de serviço | Texto curto | Sim |
+| Restrições alimentares / observações | Texto longo | Não |
+| Centro de custo | Texto curto | Não |
+
+Destino **Chamado** (Ticket):
+
+- **Categoria:** Administrativo > Coffee Break;
+- **Atribuído a:** grupo Facilities / Copa;
+- **Título:** sugere-se incluir a resposta "ID da reserva", por exemplo `Coffee Break - Reserva #<ID da reserva>`.
+
+Ajuste a política de acesso do Form ao público que pode reservar salas.
+
+### 2. IDs no plugin
+
+A configuração fica na tabela nativa de configuração do GLPI, no contexto `plugin:reservationcoffee`:
+
+| Chave | Valor |
+| --- | --- |
+| `reservable_item_ids` | IDs dos **itens reserváveis** (`ReservationItem`, não dos ativos) das salas, separados por vírgula |
+| `coffee_form_id` | ID do Form de Coffee Break |
+| `reservation_question_id` | ID da pergunta "ID da reserva" desse Form |
+| `pending_ttl_seconds` | Validade da oferta pendente na sessão, em segundos (padrão 300, limitado entre 5 e 3600) |
+
+```bash
+php bin/console config:set --context=plugin:reservationcoffee reservable_item_ids 1,2,3,4
+php bin/console config:set --context=plugin:reservationcoffee coffee_form_id 3
+php bin/console config:set --context=plugin:reservationcoffee reservation_question_id 17
+php bin/console cache:clear
+```
+
+Onde encontrar os IDs:
+
+- **Item reservável:** no calendário da sala, a URL mostra `front/reservation.php?reservationitems_id=<ID>`.
+- **Form:** a URL de preenchimento é `/Form/Render/<ID>`.
+- **Pergunta:** consulta somente leitura:
+
+  ```sql
+  SELECT q.id
+  FROM glpi_forms_questions q
+  JOIN glpi_forms_sections s ON s.id = q.forms_sections_id
+  WHERE s.forms_forms_id = <ID do Form> AND q.name = 'ID da reserva';
+  ```
+
+Qualquer valor malformado (por exemplo `1,abc`) desliga o recurso correspondente por inteiro. Cada reserva criada nesse estado registra `CONFIGURATION_ERROR invalid_keys=...` no log do plugin.
+
+## Permissões
+
+- **Dono da reserva:** pode ver a oferta e solicitar o Coffee Break da própria reserva.
+- **Outros usuários:** só têm acesso se puderem ver a reserva **e** tiverem o direito `reservation` com atualização (gestores de reservas).
+- **Demais casos:** recebem `403`. IDs inexistentes ou malformados recebem `404`.
+
+## Logs
+
+O plugin escreve em `files/_log/reservationcoffee.log`, no diretório de logs do GLPI. Cada linha traz somente:
+
+- operação;
+- categoria do erro (`VALIDATION_ERROR`, `AUTHORIZATION_ERROR`, `NOT_FOUND`, `CONFIGURATION_ERROR` ou `UNKNOWN_ERROR`);
+- IDs e, em caso de exceção, a classe e o arquivo:linha.
+
+Nunca registra nomes, respostas, comentários ou dados de sessão.
+
+## Runbook de produção
+
+1. **Janela e backup:** faça backup do banco e do diretório `files/` do GLPI.
+2. **Pacote:** confira o checksum do zip (`shasum -a 256 -c reservationcoffee-<versão>.zip.sha256`) e extraia em `plugins/`.
+3. **Instalação:** rode os comandos da seção [Instalação](#instalação).
+4. **Configuração:** crie ou valide o Form e grave os IDs (seção [Configuração](#configuração)). Depois, rode `php bin/console cache:clear`.
+5. **Smoke test** com um usuário **Self-Service** (baixo privilégio):
+   - reserve uma sala configurada com mais de 48 horas de antecedência. A tela "Coffee Break" deve aparecer, e "Solicitar Coffee Break" deve abrir o Form com o ID da reserva preenchido. Não envie o Form, a menos que queira gerar um chamado de teste;
+   - reserve uma sala com menos de 48 horas de antecedência. A tela deve mostrar o aviso de indisponibilidade, sem link para o Form;
+   - reserve um item que não seja sala configurada. O fluxo deve ser o nativo, sem tela do plugin;
+   - exclua as reservas de teste.
+6. **Monitoramento:** acompanhe `files/_log/reservationcoffee.log` e `php-errors.log` nas primeiras horas.
+
+### Rollback
+
+- **Imediato:** `php bin/console plugin:deactivate reservationcoffee`. O GLPI volta ao comportamento 100% nativo, e o JS e as rotas do plugin deixam de ser carregados.
+- **Remoção completa:** `php bin/console plugin:uninstall reservationcoffee`, que apaga a configuração `plugin:reservationcoffee`. Em seguida, remova o diretório `plugins/reservationcoffee`.
+- **Dados preservados:** reservas, Forms e chamados nunca são alterados pelo plugin.
+
+## Desenvolvimento e testes
+
+Requisitos: Docker, Node.js 22, PHP 8.2+ com Composer e, para os locales, GNU gettext.
+
+```bash
+tools/init-env.sh            # cria .env com senhas aleatórias (nunca versionado)
+tools/e2e-up.sh              # GLPI 11.0.11 + MariaDB, instala/ativa o plugin e aplica o seed sintético
+
+cd reservationcoffee && composer install
+composer lint && composer phpstan && composer cs && composer test   # PHPStan precisa de GLPI_SOURCE_DIR
+cd ..
+
+tools/integration-test.sh    # PHPUnit dentro do container do GLPI, contra a base E2E
+cd e2e && npm ci && npx playwright install chromium && npx playwright test
+```
+
+- **PHPStan:** `GLPI_SOURCE_DIR` aponta para uma cópia extraída do GLPI 11.0.11, por exemplo o `.tgz` oficial da release.
+- **E2E:** a suíte cobre o fluxo principal, segurança (IDOR, CSRF, bypass pelo catálogo, entidades), robustez (TTL, API, configuração inválida, fuso do usuário, duas abas) e regressão do calendário nativo.
+- **Locales:** `tools/update-locales.sh` extrai as strings, atualiza os `.po` (pt_BR, en_GB e es_ES) e compila os `.mo`.
+- **Pacote:** `tools/package.sh` gera `dist/reservationcoffee-<versão>.zip`.
+- **Homologação do pacote:** `tools/homologate-package.sh` roda a suíte E2E contra esse pacote, e não contra o código-fonte.
+
+## Limitações conhecidas e próximos passos (v2)
+
+- **Duas reservas quase simultâneas:** se forem concluídas em abas diferentes dentro do mesmo segundo, a primeira aba a consultar recebe a oferta mais recente. O uso sequencial em várias abas funciona.
+- **Mesma reserva, vários pedidos:** o Form pode ser enviado mais de uma vez para a mesma reserva (vários chamados).
+- **Chamados abertos fora do Form:** chamados abertos manualmente na categoria Coffee Break não passam pela regra de 48 horas. Restrinja a categoria por perfil, se necessário.
+- **Escopo da trava:** a validação no envio vale apenas para o Form configurado em `coffee_form_id`. Cópias do Form não são protegidas.
+- **Previstos para a v2:** configuração por entidade e um token de contexto de uso único, associado ao chamado, para correlacionar oferta, reserva e pedido.
+
+## Licença
+
+GPLv3 ou posterior. Veja [`reservationcoffee/LICENSE`](reservationcoffee/LICENSE).
