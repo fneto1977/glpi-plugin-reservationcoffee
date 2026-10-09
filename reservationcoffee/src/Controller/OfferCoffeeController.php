@@ -43,6 +43,7 @@ use GlpiPlugin\Reservationcoffee\Service\PluginLogger;
 use GlpiPlugin\Reservationcoffee\Service\ReservationResolver;
 use Html;
 use Session;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -94,10 +95,14 @@ final class OfferCoffeeController extends AbstractController
         );
     }
 
-    #[Route('/offer/{id}/accept', name: 'offer_accept', methods: 'POST', requirements: ['id' => '\d+'])]
+    #[Route('/offer/{id}/accept', name: 'offer_accept', requirements: ['id' => '\d+'])]
     #[SecurityStrategy(Firewall::STRATEGY_AUTHENTICATED)]
-    public function accept(int $id): Response
+    public function accept(int $id, Request $request): Response
     {
+        if (!$request->isMethod(Request::METHOD_POST)) {
+            return self::methodNotAllowed();
+        }
+
         $usersId = (int) Session::getLoginUserID();
         $context = $this->loadAuthorizedContext($id, $usersId);
 
@@ -121,15 +126,30 @@ final class OfferCoffeeController extends AbstractController
         return new RedirectResponse($formUrl);
     }
 
-    #[Route('/offer/{id}/decline', name: 'offer_decline', methods: 'POST', requirements: ['id' => '\d+'])]
+    #[Route('/offer/{id}/decline', name: 'offer_decline', requirements: ['id' => '\d+'])]
     #[SecurityStrategy(Firewall::STRATEGY_AUTHENTICATED)]
-    public function decline(int $id): Response
+    public function decline(int $id, Request $request): Response
     {
+        if (!$request->isMethod(Request::METHOD_POST)) {
+            return self::methodNotAllowed();
+        }
+
         $usersId = (int) Session::getLoginUserID();
         $this->loadAuthorizedContext($id, $usersId);
         $this->store->consume($id, $usersId);
 
         return new RedirectResponse($this->urls->calendar());
+    }
+
+    /**
+     * GLPI 11.0.4 matches plugin routes as if every request were a GET, so a
+     * `methods: 'POST'` route constraint would reject the real POST; the
+     * actions enforce the method themselves. CSRF is still checked by the core
+     * on the real POST before the controller runs.
+     */
+    private static function methodNotAllowed(): Response
+    {
+        return new Response('', Response::HTTP_METHOD_NOT_ALLOWED, ['Allow' => Request::METHOD_POST]);
     }
 
     private function loadAuthorizedContext(int $reservationId, int $usersId): ReservationContext

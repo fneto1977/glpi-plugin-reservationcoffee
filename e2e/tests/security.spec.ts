@@ -78,6 +78,22 @@ test.describe('Security', () => {
     await page.waitForURL((url) => url.pathname === `/Form/Render/${seed().form_id}`);
   });
 
+  test('E2E-30 GET on accept/decline is refused and keeps the offer', async ({ as }) => {
+    const page = await as('selfservice');
+    const reservationId = await reserveAndExpectOffer(page, ROOM().reservationitem_id, startIn(3 * DAY));
+
+    for (const action of ['accept', 'decline']) {
+      const response = await page.request.get(`${offerPath(reservationId)}/${action}`, { maxRedirects: 0 });
+      expect(response.status(), action).toBe(405);
+      expect(response.headers()['allow'], action).toBe('POST');
+    }
+
+    await page.reload();
+    await expect(offerCard(page)).toHaveAttribute('data-state', 'eligible');
+    await page.getByTestId('reservationcoffee-accept').click();
+    await page.waitForURL((url) => url.pathname === `/Form/Render/${seed().form_id}`);
+  });
+
   test('E2E-21 user from another entity cannot reach the offer', async ({ as }) => {
     const owner = await as('selfservice');
     const reservationId = await reserveAndExpectOffer(owner, ROOM().reservationitem_id, startIn(3 * DAY));
