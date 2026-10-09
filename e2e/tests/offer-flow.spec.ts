@@ -1,4 +1,4 @@
-import { test, expect, offerCard, OFFER_URL, pageAs, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
+import { test, expect, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
 import { seed } from '../support/seed';
 import { sql } from '../support/stack';
 import { DAY, HOUR, MINUTE, glpiDateTime, slotCeil, slotFloor, startIn } from '../support/time';
@@ -6,8 +6,8 @@ import { DAY, HOUR, MINUTE, glpiDateTime, slotCeil, slotFloor, startIn } from '.
 const MIN_NOTICE = 48 * HOUR;
 
 test.describe('Coffee break offer after a room reservation', () => {
-  test('E2E-01 non-room item keeps the native flow', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-01 non-room item keeps the native flow', async ({ as }) => {
+    const page = await as('selfservice');
     const pending = waitForPending(page);
 
     await reserve(page, seed().non_room.reservationitem_id, startIn(3 * DAY));
@@ -20,8 +20,8 @@ test.describe('Coffee break offer after a room reservation', () => {
   });
 
   for (const [index, room] of seed().rooms.entries()) {
-    test(`E2E-0${index + 2} room "${room.name}" eligible at +72h`, async ({ browser }) => {
-      const page = await pageAs(browser, 'selfservice');
+    test(`E2E-0${index + 2} room "${room.name}" eligible at +72h`, async ({ as }) => {
+      const page = await as('selfservice');
       const begin = startIn(3 * DAY);
 
       const reservationId = await reserveAndExpectOffer(page, room.reservationitem_id, begin);
@@ -36,8 +36,8 @@ test.describe('Coffee break offer after a room reservation', () => {
     });
   }
 
-  test('E2E-06 slot just before now+48h is not eligible', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-06 slot just before now+48h is not eligible', async ({ as }) => {
+    const page = await as('selfservice');
     const begin = slotFloor(Date.now() + MIN_NOTICE - MINUTE);
 
     await reserveAndExpectOffer(page, seed().rooms[0].reservationitem_id, begin);
@@ -49,8 +49,8 @@ test.describe('Coffee break offer after a room reservation', () => {
     await expect(page.locator('a[href*="/Form/"]')).toHaveCount(0);
   });
 
-  test('E2E-07 first slot at or after now+48h is eligible', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-07 first slot at or after now+48h is eligible', async ({ as }) => {
+    const page = await as('selfservice');
     const begin = slotCeil(Date.now() + MIN_NOTICE + MINUTE);
 
     await reserveAndExpectOffer(page, seed().rooms[1].reservationitem_id, begin);
@@ -59,16 +59,16 @@ test.describe('Coffee break offer after a room reservation', () => {
     await expect(page.getByTestId('reservationcoffee-accept')).toBeVisible();
   });
 
-  test('E2E-08 start in 30 days is eligible', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-08 start in 30 days is eligible', async ({ as }) => {
+    const page = await as('selfservice');
 
     await reserveAndExpectOffer(page, seed().rooms[2].reservationitem_id, startIn(30 * DAY));
 
     await expect(offerCard(page)).toHaveAttribute('data-state', 'eligible');
   });
 
-  test('E2E-09 "No" goes back to the calendar and clears the offer', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-09 "No" goes back to the calendar and clears the offer', async ({ as }) => {
+    const page = await as('selfservice');
     await reserveAndExpectOffer(page, seed().rooms[0].reservationitem_id, startIn(3 * DAY));
 
     await page.getByTestId('reservationcoffee-decline').click();
@@ -78,8 +78,8 @@ test.describe('Coffee break offer after a room reservation', () => {
     expect(pending.status()).toBe(204);
   });
 
-  test('E2E-10 "Yes" opens the configured form with the reservation prefilled', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-10 "Yes" opens the configured form with the reservation prefilled', async ({ as }) => {
+    const page = await as('selfservice');
     const reservationId = await reserveAndExpectOffer(page, seed().rooms[0].reservationitem_id, startIn(3 * DAY));
 
     await page.getByTestId('reservationcoffee-accept').click();
@@ -89,8 +89,8 @@ test.describe('Coffee break offer after a room reservation', () => {
     await expect(page.locator(`input[name="answers_${seed().questions.reservation_id}"]`)).toHaveValue(String(reservationId));
   });
 
-  test('E2E-11 form submission creates the Coffee Break ticket', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-11 form submission creates the Coffee Break ticket', async ({ as }) => {
+    const page = await as('selfservice');
     const reservationId = await reserveAndExpectOffer(page, seed().rooms[3].reservationitem_id, startIn(4 * DAY));
     await page.getByTestId('reservationcoffee-accept').click();
     await page.waitForURL(/\/Form\/Render\//);
@@ -113,8 +113,8 @@ test.describe('Coffee break offer after a room reservation', () => {
     expect(assigned.map((row) => Number(row.groups_id))).toContain(seed().group_id);
   });
 
-  test('E2E-12 refreshing does not redirect again nor loop', async ({ browser }) => {
-    const page = await pageAs(browser, 'selfservice');
+  test('E2E-12 refreshing does not redirect again nor loop', async ({ as }) => {
+    const page = await as('selfservice');
     const reservationId = await reserveAndExpectOffer(page, seed().rooms[1].reservationitem_id, startIn(3 * DAY));
 
     await page.reload();

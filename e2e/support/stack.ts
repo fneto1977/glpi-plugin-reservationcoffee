@@ -35,16 +35,69 @@ export function glpiConsole(...args: string[]): string {
   return docker(['exec', '-T', '-u', 'www-data', 'glpi', 'bin/console', ...args]);
 }
 
-export function setPluginConfig(key: string, value: string): void {
-  glpiConsole('config:set', '--context=plugin:reservationcoffee', key, value);
+export function getConfig(context: string, key: string): string | null {
+  const rows = sql(`SELECT value FROM glpi_configs WHERE context = '${context}' AND name = '${key}'`);
+  return rows[0]?.value ?? null;
 }
 
-export function pluginLog(): string {
+export function setConfig(context: string, key: string, value: string): void {
+  glpiConsole('config:set', `--context=${context}`, key, value);
+}
+
+/** Overrides plugin settings for the duration of `body`, restoring them afterwards. */
+export async function withPluginConfig<T>(values: Record<string, string>, body: () => Promise<T>): Promise<T> {
+  const context = 'plugin:reservationcoffee';
+  const previous = Object.fromEntries(Object.keys(values).map((key) => [key, getConfig(context, key) ?? '']));
   try {
-    return docker(['exec', '-T', 'glpi', 'sh', '-c', 'cat /var/glpi/logs/reservationcoffee.log 2>/dev/null || true']);
-  } catch {
-    return '';
+    for (const [key, value] of Object.entries(values)) {
+      setConfig(context, key, value);
+    }
+    return await body();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      setConfig(context, key, value);
+    }
   }
+}
+
+function readLog(name: string): string {
+  return docker(['exec', '-T', 'glpi', 'sh', '-c', `cat /var/glpi/logs/${name} 2>/dev/null || true`]);
+}
+
+/** Returns a function giving what was appended to a GLPI log file since this call. */
+export function logCursor(name: string): () => string {
+  const offset = readLog(name).length;
+  return () => readLog(name).slice(offset);
+}
+
+export interface ApiResponse {
+  status: number;
+  body: unknown;
+}
+
+/**
+ * Calls the legacy REST API from inside the GLPI container, so the default
+ * "full access from localhost" API client applies without widening it.
+ */
+export function legacyApi(method: string, endpoint: string, headers: Record<string, string>, body?: unknown): ApiResponse {
+  const args = ['exec', '-T', 'glpi', 'curl', '-s', '-o', '-', '-w', '\n%{http_code}', '-X', method];
+  for (const [name, value] of Object.entries(headers)) {
+    args.push('-H', `${name}: ${value}`);
+  }
+  if (body !== undefined) {
+    args.push('-H', 'Content-Type: application/json', '--data-binary', '@-');
+  }
+  args.push(`http://127.0.0.1/apirest.php/${endpoint}`);
+  const output = docker(args, body === undefined ? undefined : JSON.stringify(body)).trimEnd();
+  const split = output.lastIndexOf('\n');
+  const text = output.slice(0, split);
+  let parsed: unknown = text;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    // Non-JSON error bodies are returned as text.
+  }
+  return { status: Number(output.slice(split + 1)), body: parsed };
 }
 
 export function resetReservations(): void {

@@ -1,13 +1,16 @@
 import { test as base, expect, type Browser, type Page, type Response } from '@playwright/test';
 import { loadEnv, type E2EUserKey } from './env';
 import { resetReservations } from './stack';
-import { glpiDateTime } from './time';
+import { glpiDateTime, weekdayName } from './time';
 
 export const OFFER_URL = /\/plugins\/reservationcoffee\/offer\/(\d+)$/;
 export const PENDING_PATH = '/plugins/reservationcoffee/pending';
 
 export interface ReserveOptions {
+  /** Repeats the reservation every week on the start weekday until this date. */
   weeklyUntil?: Date;
+  /** Timezone of the logged-in user, when it differs from the server one. */
+  timeZone?: string;
 }
 
 export async function login(page: Page, user: E2EUserKey): Promise<void> {
@@ -39,11 +42,11 @@ export function waitForPending(page: Page): Promise<Response> {
  * native redirect back to the page carrying `defaultDate`.
  */
 export async function reserve(page: Page, reservationItemId: number, begin: Date, options: ReserveOptions = {}): Promise<void> {
-  await openReservationForm(page, reservationItemId, begin);
+  await openReservationForm(page, reservationItemId, begin, options.timeZone);
 
   if (options.weeklyUntil) {
-    await selectNativeDropdown(page, 'periodicity[type]', 'Semanal');
-    await page.locator('input[name="periodicity[end]"]').waitFor({ state: 'attached' });
+    await selectNativeDropdown(page, 'periodicity[type]', 'Semanalmente');
+    await page.locator(`input[name="periodicity[days][${weekdayName(begin)}]"]`).check();
     await setFlatpickrValue(page, 'periodicity[end]', glpiDateTime(options.weeklyUntil).slice(0, 10));
   }
 
@@ -53,18 +56,23 @@ export async function reserve(page: Page, reservationItemId: number, begin: Date
   ]);
 }
 
-export async function openReservationForm(page: Page, reservationItemId: number, begin: Date): Promise<void> {
+export async function openReservationForm(page: Page, reservationItemId: number, begin: Date, timeZone?: string): Promise<void> {
   const params = new URLSearchParams();
   params.set('id', '');
   params.set(`item[${reservationItemId}]`, String(reservationItemId));
-  params.set('begin', glpiDateTime(begin));
+  params.set('begin', glpiDateTime(begin, timeZone));
   await page.goto(`/front/reservation.form.php?${params.toString()}`);
   await expect(page.locator('button[name="add"]')).toBeVisible();
 }
 
 /** Reserves and waits for the plugin to land on the offer page; returns the reservation ID. */
-export async function reserveAndExpectOffer(page: Page, reservationItemId: number, begin: Date): Promise<number> {
-  await reserve(page, reservationItemId, begin);
+export async function reserveAndExpectOffer(
+  page: Page,
+  reservationItemId: number,
+  begin: Date,
+  options: ReserveOptions = {},
+): Promise<number> {
+  await reserve(page, reservationItemId, begin, options);
   await page.waitForURL(OFFER_URL);
   return Number(OFFER_URL.exec(new URL(page.url()).pathname)?.[1]);
 }
@@ -100,7 +108,7 @@ async function setFlatpickrValue(page: Page, name: string, value: string): Promi
   );
 }
 
-export const test = base.extend<{ cleanReservations: void }>({
+export const test = base.extend<{ cleanReservations: void; as: (user: E2EUserKey) => Promise<Page> }>({
   cleanReservations: [
     async ({}, use) => {
       resetReservations();
@@ -108,6 +116,16 @@ export const test = base.extend<{ cleanReservations: void }>({
     },
     { auto: true },
   ],
+  /** Logs `user` in a fresh context; contexts are closed when the test ends. */
+  as: async ({ browser }, use) => {
+    const pages: Page[] = [];
+    await use(async (user) => {
+      const page = await pageAs(browser, user);
+      pages.push(page);
+      return page;
+    });
+    await Promise.all(pages.map((page) => page.context().close()));
+  },
 });
 
 export { expect };
