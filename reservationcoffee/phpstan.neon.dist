@@ -1,0 +1,16 @@
+# Requires GLPI_SOURCE_DIR to point to an extracted GLPI 11.0.11 release.
+parameters:
+    level: 6
+    paths:
+        - setup.php
+        - hook.php
+        - src
+        - tests
+    bootstrapFiles:
+        - %env.GLPI_SOURCE_DIR%/vendor/autoload.php
+        - %env.GLPI_SOURCE_DIR%/src/autoload/constants.php
+    scanDirectories:
+        - %env.GLPI_SOURCE_DIR%/src
+    scanFiles:
+        - %env.GLPI_SOURCE_DIR%/src/autoload/i18n.php
+        - %env.GLPI_SOURCE_DIR%/src/autoload/misc-functions.php
