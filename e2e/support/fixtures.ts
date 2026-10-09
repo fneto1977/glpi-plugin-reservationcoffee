@@ -32,6 +32,17 @@ export async function pageAs(browser: Browser, user: E2EUserKey): Promise<Page> 
   return page;
 }
 
+/** Native redirect after a reservation: `defaultDate` since GLPI 11.0.11, `month` + `year` in 11.0.4. */
+export function isReservationReturn(url: URL): boolean {
+  const params = url.searchParams;
+  return (
+    params.has('defaultDate') ||
+    params.has('tab_params[defaultDate]') ||
+    (params.has('month') && params.has('year')) ||
+    (params.has('tab_params[month]') && params.has('tab_params[year]'))
+  );
+}
+
 export function waitForPending(page: Page): Promise<Response> {
   return page.waitForResponse((response) => new URL(response.url()).pathname === PENDING_PATH);
 }
@@ -39,7 +50,7 @@ export function waitForPending(page: Page): Promise<Response> {
 /**
  * Creates a reservation through the native GLPI form, exactly as the
  * "Reserve" action of the reservable items list does, and waits for the
- * native redirect back to the page carrying `defaultDate`.
+ * native redirect back to the calendar page (see `isReservationReturn`).
  */
 export async function reserve(page: Page, reservationItemId: number, begin: Date, options: ReserveOptions = {}): Promise<void> {
   await openReservationForm(page, reservationItemId, begin, options.timeZone);
@@ -51,7 +62,7 @@ export async function reserve(page: Page, reservationItemId: number, begin: Date
   }
 
   await Promise.all([
-    page.waitForURL((url) => url.searchParams.has('defaultDate') || url.searchParams.has('tab_params[defaultDate]')),
+    page.waitForURL(isReservationReturn),
     page.locator('button[name="add"]').click(),
   ]);
 }

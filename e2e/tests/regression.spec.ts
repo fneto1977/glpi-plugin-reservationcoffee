@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
+import { test, expect, isReservationReturn, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
 import { seed } from '../support/seed';
 import { glpiConsole, sql } from '../support/stack';
 import { DAY, startIn } from '../support/time';
@@ -55,7 +55,7 @@ test.describe('Regression of native reservation features', () => {
     await page.goto(`/front/reservation.form.php?id=${reservationId}`);
     let pending = waitForPending(page);
     await Promise.all([
-      page.waitForURL((url) => url.searchParams.has('tab_params[defaultDate]') || url.searchParams.has('defaultDate')),
+      page.waitForURL(isReservationReturn),
       page.locator('button[name="update"]').click(),
     ]);
     expect((await pending).status()).toBe(204);
@@ -67,7 +67,7 @@ test.describe('Regression of native reservation features', () => {
     page.once('dialog', (dialog) => dialog.accept());
     pending = waitForPending(page);
     await Promise.all([
-      page.waitForURL((url) => url.searchParams.has('tab_params[defaultDate]') || url.searchParams.has('defaultDate')),
+      page.waitForURL(isReservationReturn),
       page.locator('button[name="purge"]').click(),
     ]);
     expect((await pending).status()).toBe(204);

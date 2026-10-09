@@ -11,10 +11,15 @@
 (function () {
     'use strict';
 
-    // GLPI always adds `defaultDate` (or `tab_params[defaultDate]`) to the URL
-    // it redirects to after a reservation form is submitted.
+    // After a reservation form is submitted GLPI redirects back with the calendar
+    // date: `defaultDate` since 11.0.11, `month` + `year` in 11.0.4; both nested in
+    // `tab_params` when the back URL is an item form.
     var params = new URLSearchParams(window.location.search);
-    if (!params.has('defaultDate') && !params.has('tab_params[defaultDate]')) {
+    var isReservationReturn = params.has('defaultDate')
+        || params.has('tab_params[defaultDate]')
+        || (params.has('month') && params.has('year'))
+        || (params.has('tab_params[month]') && params.has('tab_params[year]'));
+    if (!isReservationReturn) {
         return;
     }
 
