@@ -1,0 +1,17 @@
+{
+  "name": "reservationcoffee-e2e",
+  "private": true,
+  "description": "End-to-end tests for the reservationcoffee GLPI plugin",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.18.0",
+    "dotenv": "17.2.3",
+    "typescript": "5.9.3"
+  }
+}
