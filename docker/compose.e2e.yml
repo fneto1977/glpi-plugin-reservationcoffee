@@ -37,6 +37,7 @@ services:
       - glpi-data:/var/glpi
       - ../reservationcoffee:/var/www/glpi/plugins/reservationcoffee:ro
       - ../tools:/opt/reservationcoffee-tools:ro
+      - ./php-timezone.ini:/usr/local/etc/php/conf.d/zz-timezone.ini:ro
     ports:
       - "127.0.0.1:${E2E_HTTP_PORT:-8080}:80"
     networks:
