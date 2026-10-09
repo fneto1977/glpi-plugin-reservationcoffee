@@ -1,0 +1,95 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-09 13:11-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/Controller/OfferCoffeeController.php:162
+#: templates/offer_coffee.html.twig:14
+msgid "Coffee break"
+msgstr ""
+
+#: src/Service/CoffeeRequestGuard.php:79
+msgid "The coffee break request could not be validated. Please try again later."
+msgstr ""
+
+#: src/Service/CoffeeRequestGuard.php:97
+msgid "The coffee break request is not available at the moment."
+msgstr ""
+
+#: src/Service/CoffeeRequestGuard.php:104
+msgid "Please provide a valid reservation ID."
+msgstr ""
+
+#: src/Service/CoffeeRequestGuard.php:113
+msgid "This reservation was not found or does not allow a coffee break request."
+msgstr ""
+
+#: src/Service/CoffeeRequestGuard.php:117
+msgid "A coffee break must be requested at least 48 hours before the meeting starts."
+msgstr ""
+
+#: templates/offer_coffee.html.twig:22
+msgid "There is no pending coffee break offer for this reservation."
+msgstr ""
+
+#: templates/offer_coffee.html.twig:27
+msgid "Reservation created successfully"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:32
+msgid "Room"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:35
+msgid "Period"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:37
+msgid "%1$s to %2$s"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:40
+msgid "Reservation ID"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:45
+msgid "Would you like to request a coffee break?"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:51
+msgid "No, back to the calendar"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:58
+msgid "Request coffee break"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:66
+msgid "A coffee break cannot be requested because the meeting starts in less than 48 hours."
+msgstr ""
+
+#: templates/offer_coffee.html.twig:71
+msgid "Your reservation is confirmed, but the coffee break request is unavailable right now. You can try again from the service catalog."
+msgstr ""
+
+#: templates/offer_coffee.html.twig:77
+msgid "Back to the calendar"
+msgstr ""
+
+#: templates/offer_coffee.html.twig:81
+msgid "Service catalog"
+msgstr ""
