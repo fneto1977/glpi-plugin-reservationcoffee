@@ -35,7 +35,8 @@ services:
       TZ: ${E2E_TIMEZONE:-America/Sao_Paulo}
     volumes:
       - glpi-data:/var/glpi
-      - ../reservationcoffee:/var/www/glpi/plugins/reservationcoffee:ro
+      # E2E_PLUGIN_DIR lets tools/homologate-package.sh mount the extracted release package instead.
+      - ${E2E_PLUGIN_DIR:-../reservationcoffee}:/var/www/glpi/plugins/reservationcoffee:ro
       - ../tools:/opt/reservationcoffee-tools:ro
       - ./php-timezone.ini:/usr/local/etc/php/conf.d/zz-timezone.ini:ro
     ports:
