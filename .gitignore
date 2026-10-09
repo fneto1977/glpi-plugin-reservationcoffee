@@ -29,3 +29,6 @@ especificacao_hook_reserva_coffee_glpi_11.md
 # Build artifacts
 /dist/
 *.log
+
+# Downloaded tools (PHPUnit PHAR for the integration suite)
+/tools/.cache/
