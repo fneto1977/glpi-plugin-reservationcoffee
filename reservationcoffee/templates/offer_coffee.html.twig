@@ -1,0 +1,88 @@
+{#
+ # -------------------------------------------------------------------------
+ # Reservation Coffee Break plugin for GLPI
+ # -------------------------------------------------------------------------
+ # This file is part of Reservation Coffee Break, licensed under GPLv3+.
+ # -------------------------------------------------------------------------
+ #}
+
+{% extends "layout/page_without_tabs.html.twig" %}
+
+{% set container_size = "md" %}
+
+{% block content_title %}
+    {{ __('Coffee break', 'reservationcoffee') }}
+{% endblock content_title %}
+
+{% block content_body %}
+<section class="card" aria-labelledby="reservationcoffee-heading" data-testid="reservationcoffee-offer" data-state="{{ state }}">
+    <div class="card-body">
+        {% if state == 'no_offer' %}
+            <h2 id="reservationcoffee-heading" class="card-title">
+                {{ __('There is no pending coffee break offer for this reservation.', 'reservationcoffee') }}
+            </h2>
+        {% else %}
+            <h2 id="reservationcoffee-heading" class="card-title">
+                <i class="ti ti-circle-check text-success me-1" aria-hidden="true"></i>
+                {{ __('Reservation created successfully', 'reservationcoffee') }}
+            </h2>
+        {% endif %}
+
+        <dl class="row mb-3">
+            <dt class="col-sm-4">{{ __('Room', 'reservationcoffee') }}</dt>
+            <dd class="col-sm-8" data-testid="reservationcoffee-room">{{ room_name }}</dd>
+
+            <dt class="col-sm-4">{{ __('Period', 'reservationcoffee') }}</dt>
+            <dd class="col-sm-8" data-testid="reservationcoffee-period">
+                {{ __('%1$s to %2$s', 'reservationcoffee')|format(period_begin, period_end) }}
+            </dd>
+
+            <dt class="col-sm-4">{{ __('Reservation ID', 'reservationcoffee') }}</dt>
+            <dd class="col-sm-8" data-testid="reservationcoffee-reservation-id">{{ reservation_id }}</dd>
+        </dl>
+
+        {% if state == 'eligible' %}
+            <p class="mb-3">{{ __('Would you like to request a coffee break?', 'reservationcoffee') }}</p>
+            <div class="d-flex flex-wrap gap-2">
+                <form method="post" action="{{ decline_url }}">
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-outline-secondary" data-testid="reservationcoffee-decline">
+                        <i class="ti ti-arrow-left me-1" aria-hidden="true"></i>
+                        {{ __('No, back to the calendar', 'reservationcoffee') }}
+                    </button>
+                </form>
+                <form method="post" action="{{ accept_url }}">
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-primary" data-testid="reservationcoffee-accept">
+                        <i class="ti ti-coffee me-1" aria-hidden="true"></i>
+                        {{ __('Request coffee break', 'reservationcoffee') }}
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            {% if state == 'not_eligible' %}
+                <div class="alert alert-warning" role="status" data-testid="reservationcoffee-not-eligible">
+                    <i class="ti ti-alert-triangle me-1" aria-hidden="true"></i>
+                    {{ __('A coffee break cannot be requested because the meeting starts in less than 48 hours.', 'reservationcoffee') }}
+                </div>
+            {% elseif state == 'error' %}
+                <div class="alert alert-warning" role="status" data-testid="reservationcoffee-error">
+                    <i class="ti ti-alert-triangle me-1" aria-hidden="true"></i>
+                    {{ __('Your reservation is confirmed, but the coffee break request is unavailable right now. You can try again from the service catalog.', 'reservationcoffee') }}
+                </div>
+            {% endif %}
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="{{ calendar_url }}" data-testid="reservationcoffee-back">
+                    <i class="ti ti-arrow-left me-1" aria-hidden="true"></i>
+                    {{ __('Back to the calendar', 'reservationcoffee') }}
+                </a>
+                {% if state == 'error' %}
+                    <a class="btn btn-outline-secondary" href="{{ catalog_url }}" data-testid="reservationcoffee-catalog">
+                        {{ __('Service catalog', 'reservationcoffee') }}
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock content_body %}
