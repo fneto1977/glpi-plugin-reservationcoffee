@@ -100,6 +100,16 @@ export function legacyApi(method: string, endpoint: string, headers: Record<stri
   return { status: Number(output.slice(split + 1)), body: parsed };
 }
 
+/**
+ * Whether the core applies the user's own timezone to the DB session on every
+ * request. GLPI 11.0.4 only does it on the login request (no `SetDbSessionVars`
+ * listener), so dates typed by such users are stored in the server timezone.
+ */
+export function glpiAppliesUserTimezone(): boolean {
+  const listener = '/var/www/glpi/src/Glpi/Kernel/Listener/PostBootListener/SetDbSessionVars.php';
+  return docker(['exec', '-T', 'glpi', 'sh', '-c', `test -f ${listener} && echo yes || echo no`]).trim() === 'yes';
+}
+
 export function resetReservations(): void {
   sql('DELETE FROM glpi_reservations;');
 }

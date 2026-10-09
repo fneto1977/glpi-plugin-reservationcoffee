@@ -1,7 +1,7 @@
 import { test, expect, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
 import { loadEnv } from '../support/env';
 import { seed } from '../support/seed';
-import { legacyApi, logCursor, setConfig, sql, withPluginConfig } from '../support/stack';
+import { glpiAppliesUserTimezone, legacyApi, logCursor, setConfig, sql, withPluginConfig } from '../support/stack';
 import { DAY, HOUR, MINUTE, glpiDateTime, slotCeil, slotFloor, startIn } from '../support/time';
 
 const MIN_NOTICE = 48 * HOUR;
@@ -133,6 +133,7 @@ test.describe('Robustness', () => {
     const userId = () => seed().users.selfservice2;
 
     test.beforeEach(() => {
+      test.skip(!glpiAppliesUserTimezone(), 'core bug in this GLPI version: the user timezone is ignored after login');
       sql(`UPDATE glpi_users SET timezone = '${userTimeZone}' WHERE id = ${userId()}`);
     });
     test.afterEach(() => {
