@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Starts the GLPI 11.0.11 homologation stack, installs and activates the plugin
+# Starts the GLPI homologation stack (11.0.11 by default, see E2E_GLPI_VERSION), installs and activates the plugin
 # and seeds the synthetic E2E data. Safe to run repeatedly.
 set -euo pipefail
 

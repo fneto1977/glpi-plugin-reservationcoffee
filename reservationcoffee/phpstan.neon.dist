@@ -1,4 +1,4 @@
-# Requires GLPI_SOURCE_DIR to point to an extracted GLPI 11.0.11 release.
+# Requires GLPI_SOURCE_DIR to point to an extracted GLPI 11.0.x release (>= 11.0.4).
 parameters:
     level: 6
     paths:

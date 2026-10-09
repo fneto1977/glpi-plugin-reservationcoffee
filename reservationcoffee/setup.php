@@ -29,8 +29,8 @@ use Glpi\Plugin\Hooks;
 
 define('PLUGIN_RESERVATIONCOFFEE_VERSION', '0.1.0');
 
-// Only 11.0.11 has been validated; `max` is exclusive.
-define('PLUGIN_RESERVATIONCOFFEE_MIN_GLPI', '11.0.11');
+// Validated on 11.0.4 and 11.0.11; `max` is exclusive.
+define('PLUGIN_RESERVATIONCOFFEE_MIN_GLPI', '11.0.4');
 define('PLUGIN_RESERVATIONCOFFEE_MAX_GLPI', '12.0.0');
 
 function plugin_init_reservationcoffee(): void

@@ -22,7 +22,8 @@ services:
       start_period: 10s
 
   glpi:
-    image: glpi/glpi:11.0.11
+    # Supported range starts at 11.0.4; CI runs both 11.0.4 and 11.0.11.
+    image: glpi/glpi:${E2E_GLPI_VERSION:-11.0.11}
     depends_on:
       db:
         condition: service_healthy

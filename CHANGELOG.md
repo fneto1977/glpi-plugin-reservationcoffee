@@ -17,6 +17,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - Traduções pt_BR (principal), en_GB e es_ES.
 - Testes:
   - unitários (PHPUnit);
-  - de integração dentro do GLPI 11.0.11;
-  - E2E com Playwright (E2E-01 a E2E-27).
+  - de integração dentro do GLPI 11.0.4 e 11.0.11;
+  - E2E com Playwright (E2E-01 a E2E-30) nas duas versões.
+- Compatibilidade com GLPI 11.0.4 a 11.0.x (`< 12.0.0`):
+  - reconhece os dois formatos de retorno pós-reserva (`defaultDate` e `month`/`year`);
+  - exige POST no controller das ações "Solicitar" e "Não", porque o router de plugins da 11.0.4 ignora a restrição de método da rota.
 - CI no GitHub Actions: lint, PHPStan, coding style, testes, auditoria de dependências, verificação de locales, secret scan, integração e E2E.
