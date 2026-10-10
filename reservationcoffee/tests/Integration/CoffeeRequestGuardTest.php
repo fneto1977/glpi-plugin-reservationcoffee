@@ -12,7 +12,7 @@ final class CoffeeRequestGuardTest extends IntegrationTestCase
     /**
      * Builds the input `AnswersHandler` passes to `AnswersSet::add()`.
      */
-    private function submission(int $usersId, mixed $reservationAnswer, ?int $formId = null): AnswersSet
+    private function submission(int $usersId, mixed $reservationAnswer, ?int $formId = null, mixed $participants = '8'): AnswersSet
     {
         $answersSet = new AnswersSet();
         $answersSet->input = [
@@ -20,6 +20,7 @@ final class CoffeeRequestGuardTest extends IntegrationTestCase
             'users_id'       => $usersId,
             'answers'        => json_encode([
                 ['question_id' => $this->reservationQuestionId(), 'raw_answer' => $reservationAnswer],
+                ['question_id' => $this->questionId('Participantes'), 'raw_answer' => $participants],
             ]),
         ];
 
@@ -68,6 +69,20 @@ final class CoffeeRequestGuardTest extends IntegrationTestCase
             self::assertFalse($this->isAccepted($this->submission($owner, $answer)), var_export($answer, true));
         }
         self::assertFalse($this->isAccepted($this->submission(0, $nonRoomId)));
+    }
+
+    public function testParticipantsMustBeAPositiveInteger(): void
+    {
+        $owner = $this->loginAs('e2e.selfservice');
+        $reservationId = (int) $this->createReservation(self::ROOM, $owner, $this->startIn(3 * 86400))->getID();
+
+        self::assertTrue($this->isAccepted($this->submission($owner, $reservationId, null, 1)));
+        foreach (['0', 0, '-2', '2.5', 'doze', '', null] as $participants) {
+            self::assertFalse(
+                $this->isAccepted($this->submission($owner, $reservationId, null, $participants)),
+                var_export($participants, true),
+            );
+        }
     }
 
     public function testOtherFormsAreNotGuarded(): void
