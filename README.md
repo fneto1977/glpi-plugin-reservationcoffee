@@ -11,9 +11,10 @@ O calendário e o formulário de reservas continuam 100% nativos. O plugin não 
 3. Na página para a qual o GLPI redireciona depois da reserva, um script do plugin consulta `GET /plugins/reservationcoffee/pending` e, se houver oferta, abre a tela intermediária `/plugins/reservationcoffee/offer/{id}`.
 4. A tela mostra a sala, o período e duas opções:
    - **Não, voltar ao calendário**;
-   - **Solicitar Coffee Break**, que abre o Form nativo com o campo "ID da reserva" já preenchido.
+   - **Solicitar Coffee Break**, que abre o Form nativo com o ID da reserva, o solicitante, a data, o horário de início e a sala já preenchidos.
 5. Com menos de 48 horas de antecedência, a tela só informa a indisponibilidade.
-6. A regra de 48 horas e a posse da reserva são **validadas de novo no servidor** quando o Form é enviado (hook `pre_item_add` de `Glpi\Form\AnswersSet`). Abrir o Form direto pelo catálogo de serviços não contorna a regra: o envio é recusado e nenhum chamado é criado.
+6. A regra de 48 horas e a posse da reserva são **validadas de novo no servidor** quando o Form é enviado (hook `pre_item_add` de `Glpi\Form\AnswersSet`), sempre a partir do **ID da reserva** relido do banco. Abrir o Form direto pelo catálogo de serviços não contorna a regra: o envio é recusado e nenhum chamado é criado.
+7. O chamado criado por um envio aceito recebe o título `Coffee Break - <Sala> - <dd/mm/aaaa HH:MM> - Reserva #<ID>` e, no início da descrição, a sala e o período **como estão na reserva**. Data, horário e sala digitados no Form podem divergir sem bloquear o envio; eles aparecem apenas na lista de respostas.
 
 Reservas criadas pela API ou por linha de comando, edições e exclusões de reservas, e itens que não são salas configuradas seguem o comportamento nativo, sem oferta.
 
@@ -43,20 +44,26 @@ Enquanto não for configurado (próxima seção), o plugin fica inerte: sem conf
 
 Crie pelo administrador de formulários do GLPI (Administração > Formulários) o Form **"Solicitação de Coffee Break"** com:
 
-| Pergunta | Tipo | Obrigatória |
-| --- | --- | --- |
-| ID da reserva | Número | Sim |
-| Quantidade de participantes | Número | Sim |
-| Horário desejado do Coffee Break | Texto curto | Sim |
-| Tipo de serviço | Texto curto | Sim |
-| Restrições alimentares / observações | Texto longo | Não |
-| Centro de custo | Texto curto | Não |
+| Pergunta | Tipo | Obrigatória | Preenchida pelo plugin | Condição |
+| --- | --- | --- | --- | --- |
+| ID da reserva | Número | Sim | Sim | — |
+| Solicitante | Texto curto | Não | Nome do usuário logado | — |
+| Data | Texto curto | Não | Data de início, no formato de data do usuário | — |
+| Horário de início | Texto curto | Não | `HH:MM` | — |
+| Sala | Texto curto | Não | Nome do item reservado | — |
+| Participantes | Número | Sim | Não | Validação "corresponde à expressão regular" `/^[1-9][0-9]{0,3}$/` |
+| Necessita de Coffee Break | Botões de opção: Sim (`sim`, padrão) / Não (`nao`) | Sim | Não | — |
+| Itens solicitados | Caixas de seleção: Café, Água, Refrigerante, Suco, Salgados, Doces | Sim, quando visível | Não | Visível se "Necessita de Coffee Break" for igual a `sim` |
+| Observações | Texto longo | Não | Não | — |
+
+As perguntas preenchidas pelo plugin continuam editáveis. "Solicitante", "Data", "Horário de início" e "Sala" são de texto curto porque o GLPI só aceita pré-preenchimento por URL em texto, número, e-mail, texto longo, urgência e tipo de requisição. O tipo nativo "Solicitante" não tem a opção "usuário atual" como padrão. O solicitante do chamado continua sendo, de forma nativa, quem preencheu o Form.
 
 Destino **Chamado** (Ticket):
 
 - **Categoria:** Administrativo > Coffee Break;
 - **Atribuído a:** grupo Facilities / Copa;
-- **Título:** sugere-se incluir a resposta "ID da reserva", por exemplo `Coffee Break - Reserva #<ID da reserva>`.
+- **Título:** `Coffee Break - <Sala> - <Data> <Horário de início> - Reserva #<ID da reserva>`, com as respostas. O plugin substitui esse título pelos dados reais da reserva (veja [Como funciona](#como-funciona)), e o modelo nativo vale se o plugin estiver desativado;
+- **Descrição:** a configuração automática, que lista todas as perguntas respondidas, inclusive participantes e itens.
 
 Ajuste a política de acesso do Form ao público que pode reservar salas.
 
@@ -69,6 +76,8 @@ A configuração fica na tabela nativa de configuração do GLPI, no contexto `p
 | `reservable_item_ids` | IDs dos **itens reserváveis** (`ReservationItem`, não dos ativos) das salas, separados por vírgula |
 | `coffee_form_id` | ID do Form de Coffee Break |
 | `reservation_question_id` | ID da pergunta "ID da reserva" desse Form |
+| `requester_question_id`, `date_question_id`, `time_question_id`, `room_question_id` | Opcionais: IDs das perguntas "Solicitante", "Data", "Horário de início" e "Sala", a pré-preencher |
+| `participants_question_id` | Opcional: ID da pergunta "Participantes". O envio é recusado se a resposta não for um inteiro maior que zero |
 | `pending_ttl_seconds` | Validade da oferta pendente na sessão, em segundos (padrão 300, limitado entre 5 e 3600) |
 
 ```bash
@@ -116,7 +125,7 @@ Nunca registra nomes, respostas, comentários ou dados de sessão.
 3. **Instalação:** rode os comandos da seção [Instalação](#instalação).
 4. **Configuração:** crie ou valide o Form e grave os IDs (seção [Configuração](#configuração)). Depois, rode `php bin/console cache:clear`.
 5. **Smoke test** com um usuário **Self-Service** (baixo privilégio):
-   - reserve uma sala configurada com mais de 48 horas de antecedência. A tela "Coffee Break" deve aparecer, e "Solicitar Coffee Break" deve abrir o Form com o ID da reserva preenchido. Não envie o Form, a menos que queira gerar um chamado de teste;
+   - reserve uma sala configurada com mais de 48 horas de antecedência. A tela "Coffee Break" deve aparecer, e "Solicitar Coffee Break" deve abrir o Form com o ID da reserva, o solicitante, a data, o horário e a sala preenchidos. Não envie o Form, a menos que queira gerar um chamado de teste;
    - reserve uma sala com menos de 48 horas de antecedência. A tela deve mostrar o aviso de indisponibilidade, sem link para o Form;
    - reserve um item que não seja sala configurada. O fluxo deve ser o nativo, sem tela do plugin;
    - exclua as reservas de teste.
@@ -126,7 +135,7 @@ Nunca registra nomes, respostas, comentários ou dados de sessão.
 
 - **Imediato:** `php bin/console plugin:deactivate reservationcoffee`. O GLPI volta ao comportamento 100% nativo, e o JS e as rotas do plugin deixam de ser carregados.
 - **Remoção completa:** `php bin/console plugin:uninstall reservationcoffee`, que apaga a configuração `plugin:reservationcoffee`. Em seguida, remova o diretório `plugins/reservationcoffee`.
-- **Dados preservados:** reservas, Forms e chamados nunca são alterados pelo plugin.
+- **Dados preservados:** reservas e Forms nunca são alterados pelo plugin. Dos chamados, ele só define o título e o resumo da reserva na criação de um pedido de Coffee Break aceito.
 
 ## Desenvolvimento e testes
 
@@ -150,7 +159,7 @@ cd e2e && npm ci && npx playwright install chromium && npx playwright test
 - **Pacote:** `tools/package.sh` gera `dist/reservationcoffee-<versão>.zip`.
 - **Homologação do pacote:** `tools/homologate-package.sh` roda a suíte E2E contra esse pacote, e não contra o código-fonte.
 - **Outra versão do GLPI:** a stack aceita `E2E_GLPI_VERSION`. Para rodá-la ao lado da padrão, use outro projeto e outra porta, por exemplo `COMPOSE_PROJECT_NAME=rc-glpi-1104 E2E_GLPI_VERSION=11.0.4 E2E_HTTP_PORT=8092 tools/e2e-up.sh`, com as mesmas variáveis nos comandos de teste. A CI roda integração e E2E em 11.0.4 e 11.0.11.
-- **Servidor de homologação remoto:** `tools/remote-e2e.sh` roda a mesma suíte contra um GLPI acessado por SSH (nunca produção), com o plugin já instalado e ativo. `prepare` copia os helpers para `/tmp/rc-e2e` no servidor, `seed` cria usuários, entidade e Form usando as salas existentes (`E2E_SEED_ROOM_ITEMS`) e, como item que não é sala, um periférico "[E2E-RC] Projetor" ou um item existente em `E2E_SEED_NON_ROOM_ITEM`. Não use itens cuja reserva nativa seja proibida no servidor, como veículos reservados por outro plugin. `test` roda o Playwright e `teardown` remove os helpers. Os endereços e caminhos do servidor vêm de variáveis de ambiente descritas no cabeçalho do script; as senhas dos usuários E2E vêm do `.env` local. O seed não é desfeito automaticamente: remova os dados de teste ao final.
+- **Servidor de homologação remoto:** `tools/remote-e2e.sh` roda a mesma suíte contra um GLPI acessado por SSH (nunca produção), com o plugin já instalado e ativo. `prepare` copia os helpers para `/tmp/rc-e2e` no servidor, `seed` cria usuários, entidade e Form usando as salas existentes (`E2E_SEED_ROOM_ITEMS`) e, como item que não é sala, um periférico "[E2E-RC] Projetor" ou um item existente em `E2E_SEED_NON_ROOM_ITEM`. Não use itens cuja reserva nativa seja proibida no servidor, como veículos reservados por outro plugin. `test` roda o Playwright e `teardown` remove os helpers. Os endereços e caminhos do servidor vêm de variáveis de ambiente descritas no cabeçalho do script; as senhas dos usuários E2E vêm do `.env` local. O seed não é desfeito automaticamente: remova os dados de teste ao final. Antes do primeiro teste, a suíte confere que os IDs de usuário de `e2e/.auth/seed.json` são os dos usuários E2E do servidor alvo e para se não forem. Rode o `seed` sempre que trocar de servidor.
 
 ## Compatibilidade entre versões do GLPI 11.0
 
@@ -160,12 +169,15 @@ cd e2e && npm ci && npx playwright install chromium && npx playwright test
 - **Fuso pessoal do usuário (limitação do core 11.0.4):** a 11.0.4 só aplica o fuso definido nas preferências do usuário na sessão do banco durante o login. Nos requests seguintes, as datas digitadas são gravadas no fuso do servidor. O plugin avalia a reserva exatamente como o GLPI a gravou. Na 11.0.4, mantenha os usuários no fuso do servidor ou atualize para a 11.0.11. O teste E2E-20 é pulado nessa versão.
 - **Notificação de reserva com "grupo técnico do item" (core 11.0.4):** se uma notificação de reserva tiver como destinatário o grupo técnico responsável pelo item e o item reservável não tiver grupo técnico (ativo personalizado ou nativo, como um periférico), a 11.0.4 falha ao criar a reserva ("Empty IN are not allowed"), com ou sem este plugin. Defina um grupo técnico nesses itens (os membros passam a receber essa notificação), ajuste os destinatários da notificação ou atualize o GLPI. Reservas criadas com `_disablenotif` não disparam a notificação.
 - **Pré-preenchimento do Form:** a 11.0.4 só pré-preenche perguntas cujo UUID não tenha `.`, como os gerados pelo editor de Forms atual.
+- **Participantes igual a "0" (core 11.0.4 e 11.0.11):** o GLPI não aplica as condições de validação a respostas que considera vazias, como "0". Por isso o plugin também recusa o envio quando `participants_question_id` está configurado.
 
 ## Limitações conhecidas e próximos passos (v2)
 
 Os riscos residuais abaixo foram avaliados e aceitos para a v0.1.0 em 2026-10-09.
 
 - **Duas reservas quase simultâneas:** se forem concluídas em abas diferentes dentro do mesmo segundo, a primeira aba a consultar recebe a oferta mais recente. O uso sequencial em várias abas funciona.
+- **Campos editáveis:** Solicitante, Data, Horário de início e Sala podem ser alterados no Form. O título e o resumo do chamado sempre vêm da reserva, mas as respostas digitadas também aparecem na descrição.
+- **Chamado sem Coffee Break:** com "Necessita de Coffee Break" = Não, o chamado também é criado, sem itens.
 - **Mesma reserva, vários pedidos:** o Form pode ser enviado mais de uma vez para a mesma reserva (vários chamados).
 - **Chamados abertos fora do Form:** chamados abertos manualmente na categoria Coffee Break não passam pela regra de 48 horas. Restrinja a categoria por perfil, se necessário.
 - **Escopo da trava:** a validação no envio vale apenas para o Form configurado em `coffee_form_id`. Cópias do Form não são protegidas.
