@@ -8,7 +8,6 @@ use Auth;
 use DateTimeImmutable;
 use DateTimeZone;
 use Glpi\Form\Form;
-use Glpi\Form\Question;
 use PHPUnit\Framework\TestCase;
 use Reservation;
 use ReservationItem;
@@ -90,12 +89,18 @@ abstract class IntegrationTestCase extends TestCase
 
     protected function reservationQuestionId(): int
     {
-        $question = new Question();
-        if (!$question->getFromDBByCrit(['name' => self::RESERVATION_QUESTION])) {
-            throw new RuntimeException('Seed question not found');
+        return $this->questionId(self::RESERVATION_QUESTION);
+    }
+
+    protected function questionId(string $name): int
+    {
+        foreach (Form::getById($this->formId())->getQuestions() as $question) {
+            if ($question->fields['name'] === $name) {
+                return (int) $question->getID();
+            }
         }
 
-        return (int) $question->getID();
+        throw new RuntimeException(sprintf('Seed question "%s" not found', $name));
     }
 
     /**

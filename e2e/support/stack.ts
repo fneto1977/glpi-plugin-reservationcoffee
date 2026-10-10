@@ -179,10 +179,31 @@ export function glpiAppliesUserTimezone(): boolean {
   return answer.trim() === 'yes';
 }
 
+function e2eLogins(): string {
+  return Object.keys(seed().users)
+    .map((key) => `'${env.credentials[key as keyof typeof env.credentials].login}'`)
+    .join(',');
+}
+
+/**
+ * Fails when the seed file was written for another GLPI: its user IDs would
+ * then designate real people on this one.
+ */
+export function assertSeedMatchesTarget(): void {
+  const rows = sql(`SELECT id, name FROM glpi_users WHERE name IN (${e2eLogins()})`);
+  const ids = Object.fromEntries(rows.map((row) => [row.name, Number(row.id)]));
+  for (const [key, id] of Object.entries(seed().users)) {
+    const login = env.credentials[key as keyof typeof env.credentials].login;
+    if (ids[login] !== id) {
+      throw new Error(`The seed file does not match ${env.baseUrl} (${login}); run the seed against it first.`);
+    }
+  }
+}
+
 /** Removes reservations before each test; on a remote server only those made by the E2E users. */
 export function resetReservations(): void {
   if (remoteSsh) {
-    sql(`DELETE FROM glpi_reservations WHERE users_id IN (${Object.values(seed().users).join(',')});`);
+    sql(`DELETE r FROM glpi_reservations r JOIN glpi_users u ON u.id = r.users_id WHERE u.name IN (${e2eLogins()});`);
     return;
   }
   sql('DELETE FROM glpi_reservations;');

@@ -16,8 +16,9 @@
 #   E2E_REMOTE_GLPI_LOG_DIR   GLPI_LOG_DIR on the server
 #   E2E_BASE_URL              URL of the GLPI site
 #   E2E_SEED_ROOM_ITEMS       4 existing ReservationItem IDs used as rooms
-#   E2E_SEED_NON_ROOM_ITEM    1 existing ReservationItem ID that is not a room
-# Optional: E2E_REMOTE_GLPI_CONFIG_DIR (default /etc/glpi); E2E_REMOTE_API_ADDR, local
+# Optional: E2E_SEED_NON_ROOM_ITEM, 1 existing ReservationItem ID that is not a
+# room and may be reserved natively (default: the seed creates "[E2E-RC] Projetor");
+# E2E_REMOTE_GLPI_CONFIG_DIR (default /etc/glpi); E2E_REMOTE_API_ADDR, local
 # address the site answers on (default 127.0.0.1), which a GLPI API client must
 # allow without app token for E2E-18.
 # The E2E users' passwords come from the local .env (tools/init-env.sh).
@@ -43,7 +44,7 @@ case "${1:-}" in
         echo "Helpers copied to ${E2E_REMOTE_SSH}:${remote_dir}"
         ;;
     seed)
-        : "${E2E_SEED_ROOM_ITEMS:?}" "${E2E_SEED_NON_ROOM_ITEM:?}"
+        : "${E2E_SEED_ROOM_ITEMS:?}"
         set -a
         # shellcheck disable=SC1091
         source "${repo_root}/.env"

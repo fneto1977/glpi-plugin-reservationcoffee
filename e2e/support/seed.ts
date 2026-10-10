@@ -16,12 +16,21 @@ export interface SeedData {
   category_id: number;
   form_id: number;
   section_id: number;
-  questions: Record<
-    'reservation_id' | 'participants' | 'service_time' | 'service_type' | 'restrictions' | 'cost_center',
-    number
-  >;
+  questions: Record<QuestionKey, number>;
+  question_uuids: Record<QuestionKey, string>;
   reservation_question_uuid: string;
 }
+
+export type QuestionKey =
+  | 'reservation_id'
+  | 'requester'
+  | 'date'
+  | 'start_time'
+  | 'room'
+  | 'participants'
+  | 'needs_coffee'
+  | 'items'
+  | 'notes';
 
 let cached: SeedData | undefined;
 

@@ -1,3 +1,4 @@
+import { answerInput, decodeHtml, expectedTicketTitle, maxTicketId, option, submitCoffeeRequest } from '../support/coffee-form';
 import { test, expect, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
 import { seed } from '../support/seed';
 import { glpiDateFormat, sql } from '../support/stack';
@@ -78,37 +79,55 @@ test.describe('Coffee break offer after a room reservation', () => {
     expect(pending.status()).toBe(204);
   });
 
-  test('E2E-10 "Yes" opens the configured form with the reservation prefilled', async ({ as }) => {
+  test('E2E-10 "Yes" opens the configured form prefilled from the reservation', async ({ as }) => {
     const page = await as('selfservice');
-    const reservationId = await reserveAndExpectOffer(page, seed().rooms[0].reservationitem_id, startIn(3 * DAY));
+    const room = seed().rooms[0];
+    const begin = startIn(3 * DAY);
+    const reservationId = await reserveAndExpectOffer(page, room.reservationitem_id, begin);
 
     await page.getByTestId('reservationcoffee-accept').click();
 
     await page.waitForURL((url) => url.pathname === `/Form/Render/${seed().form_id}`);
     expect(new URL(page.url()).searchParams.get(seed().reservation_question_uuid.replaceAll('.', '_'))).toBe(String(reservationId));
-    await expect(page.locator(`input[name="answers_${seed().questions.reservation_id}"]`)).toHaveValue(String(reservationId));
+    const [date, time] = displayedDateTime(begin, glpiDateFormat()).split(' ');
+    const { realname } = sql("SELECT realname FROM glpi_users WHERE name = 'e2e.selfservice'")[0];
+    await expect(answerInput(page, 'reservation_id')).toHaveValue(String(reservationId));
+    await expect(answerInput(page, 'requester')).toHaveValue(new RegExp(String(realname).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    await expect(answerInput(page, 'date')).toHaveValue(date);
+    await expect(answerInput(page, 'start_time')).toHaveValue(time);
+    await expect(answerInput(page, 'room')).toHaveValue(room.name);
+    await expect(answerInput(page, 'participants')).toHaveValue('');
+    await expect(option(page, 'needs_coffee', 'sim')).toBeChecked();
+
+    for (const key of ['requester', 'date', 'start_time', 'room'] as const) {
+      await expect(answerInput(page, key)).toBeEditable();
+    }
   });
 
-  test('E2E-11 form submission creates the Coffee Break ticket', async ({ as }) => {
+  test('E2E-11 form submission creates the Coffee Break ticket from the reservation as booked', async ({ as }) => {
     const page = await as('selfservice');
-    const reservationId = await reserveAndExpectOffer(page, seed().rooms[3].reservationitem_id, startIn(4 * DAY));
+    const room = seed().rooms[3];
+    const begin = startIn(4 * DAY);
+    const reservationId = await reserveAndExpectOffer(page, room.reservationitem_id, begin);
     await page.getByTestId('reservationcoffee-accept').click();
     await page.waitForURL(/\/Form\/Render\//);
-    const before = Number(sql('SELECT COALESCE(MAX(id), 0) AS max_id FROM glpi_tickets')[0].max_id);
+    const before = maxTicketId();
 
-    const { questions } = seed();
-    await page.locator(`input[name="answers_${questions.participants}"]`).fill('12');
-    await page.locator(`input[name="answers_${questions.service_time}"]`).fill('10:00');
-    await page.locator(`input[name="answers_${questions.service_type}"]`).fill('Coffee simples');
-    await page.locator(`input[name="answers_${questions.cost_center}"]`).fill('CC-E2E');
-    await page.getByRole('button', { name: 'Enviar' }).click();
+    await answerInput(page, 'date').fill('31-12-2099');
+    await answerInput(page, 'room').fill('Sala digitada E2E');
+    await submitCoffeeRequest(page, { participants: '12', items: ['cafe', 'salgados'] });
 
-    await expect
-      .poll(() => sql(`SELECT id FROM glpi_tickets WHERE id > ${before}`).length, { timeout: 15_000 })
-      .toBe(1);
-    const ticket = sql(`SELECT id, name, itilcategories_id FROM glpi_tickets WHERE id > ${before}`)[0];
+    await expect.poll(() => sql(`SELECT id FROM glpi_tickets WHERE id > ${before}`).length, { timeout: 15_000 }).toBe(1);
+    const ticket = sql(`SELECT id, name, content, itilcategories_id FROM glpi_tickets WHERE id > ${before}`)[0];
+    expect(ticket.name).toBe(expectedTicketTitle(room.name, begin, reservationId));
     expect(Number(ticket.itilcategories_id)).toBe(seed().category_id);
-    expect(ticket.name).toContain(String(reservationId));
+    const content = decodeHtml(String(ticket.content));
+    expect(content).toContain(`Reserva #${reservationId}, conforme registrada`);
+    expect(content).toContain(room.name);
+    expect(content).toContain('Participantes');
+    expect(content).toContain('12');
+    expect(content).toContain('Café, Salgados');
+    expect(content).toContain('Sala digitada E2E');
     const assigned = sql(`SELECT groups_id FROM glpi_groups_tickets WHERE tickets_id = ${ticket.id} AND type = 2`);
     expect(assigned.map((row) => Number(row.groups_id))).toContain(seed().group_id);
   });

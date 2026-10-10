@@ -1,6 +1,7 @@
+import { maxTicketId, submitCoffeeRequest } from '../support/coffee-form';
 import { test, expect, offerCard, reserveAndExpectOffer } from '../support/fixtures';
 import { seed } from '../support/seed';
-import { logCursor, sql } from '../support/stack';
+import { logCursor } from '../support/stack';
 import { DAY, startIn } from '../support/time';
 import type { Page } from '@playwright/test';
 
@@ -10,17 +11,8 @@ function offerPath(id: number | string): string {
   return `/plugins/reservationcoffee/offer/${id}`;
 }
 
-function maxTicketId(): number {
-  return Number(sql('SELECT COALESCE(MAX(id), 0) AS max_id FROM glpi_tickets')[0].max_id);
-}
-
 async function submitCoffeeForm(page: Page, reservationId: string): Promise<void> {
-  const { questions } = seed();
-  await page.locator(`input[name="answers_${questions.reservation_id}"]`).fill(reservationId);
-  await page.locator(`input[name="answers_${questions.participants}"]`).fill('8');
-  await page.locator(`input[name="answers_${questions.service_time}"]`).fill('15:00');
-  await page.locator(`input[name="answers_${questions.service_type}"]`).fill('Coffee completo');
-  await page.getByRole('button', { name: 'Enviar' }).click();
+  await submitCoffeeRequest(page, { reservationId });
 }
 
 async function openFormFromCatalog(page: Page): Promise<void> {
