@@ -1,6 +1,6 @@
 # Reservation Coffee Break (`reservationcoffee`)
 
-Microplugin para **GLPI 11.0.11+** que, logo após a reserva de uma sala de reunião, oferece ao usuário abrir o formulário nativo **"Solicitação de Coffee Break"**, exigindo **48 horas de antecedência** do início da reunião.
+Microplugin para **GLPI 11.0.4+** que, logo após a reserva de uma sala de reunião, oferece ao usuário abrir o formulário nativo **"Solicitação de Coffee Break"**, exigindo **48 horas de antecedência** do início da reunião.
 
 O calendário e o formulário de reservas continuam 100% nativos. O plugin não altera o core do GLPI, não cria tabelas e pode ser desativado a qualquer momento sem deixar resíduos funcionais.
 
@@ -19,7 +19,7 @@ Reservas criadas pela API ou por linha de comando, edições e exclusões de res
 
 ## Requisitos
 
-- GLPI `>= 11.0.11` e `< 12.0.0`.
+- GLPI `>= 11.0.4` e `< 12.0.0` (validado em 11.0.4 e 11.0.11; veja [Compatibilidade entre versões do GLPI 11.0](#compatibilidade-entre-versões-do-glpi-110)).
 - PHP `>= 8.2`, conforme o GLPI 11.
 - Recomendado: suporte a fusos horários do GLPI habilitado (`php bin/console database:enable_timezones`) quando houver usuários em fusos diferentes do servidor.
 
@@ -144,7 +144,7 @@ tools/integration-test.sh    # PHPUnit dentro do container do GLPI, contra a bas
 cd e2e && npm ci && npx playwright install chromium && npx playwright test
 ```
 
-- **PHPStan:** `GLPI_SOURCE_DIR` aponta para uma cópia extraída do GLPI 11.0.11, por exemplo o `.tgz` oficial da release.
+- **PHPStan:** `GLPI_SOURCE_DIR` aponta para uma cópia extraída do GLPI 11.0.x, por exemplo o `.tgz` oficial da release. A CI verifica a 11.0.11 e a versão mínima 11.0.4.
 - **E2E:** a suíte cobre o fluxo principal, segurança (IDOR, CSRF, bypass pelo catálogo, entidades), robustez (TTL, API, configuração inválida, fuso do usuário, duas abas) e regressão do calendário nativo.
 - **Locales:** `tools/update-locales.sh` extrai as strings, atualiza os `.po` (pt_BR, en_GB e es_ES) e compila os `.mo`.
 - **Pacote:** `tools/package.sh` gera `dist/reservationcoffee-<versão>.zip`.
