@@ -158,15 +158,18 @@ cd e2e && npm ci && npx playwright install chromium && npx playwright test
 - **Custo:** na 11.0.4, abrir uma agenda pelo link "Ver planejamento" também gera uma consulta a `/pending`. É um GET leve, que só lê a sessão e responde `204` quando não há oferta; nada é gravado e não há redirecionamento.
 - **Rotas de ação:** na 11.0.4 o router de plugins casa as rotas como se toda requisição fosse GET. Por isso "Solicitar" e "Não" não declaram restrição de método na rota: o controller exige POST (GET recebe `405`) e o core continua validando o token CSRF no POST.
 - **Fuso pessoal do usuário (limitação do core 11.0.4):** a 11.0.4 só aplica o fuso definido nas preferências do usuário na sessão do banco durante o login. Nos requests seguintes, as datas digitadas são gravadas no fuso do servidor. O plugin avalia a reserva exatamente como o GLPI a gravou. Na 11.0.4, mantenha os usuários no fuso do servidor ou atualize para a 11.0.11. O teste E2E-20 é pulado nessa versão.
-- **Notificação de reserva com "grupo técnico do item" (core 11.0.4):** se uma notificação de reserva tiver como destinatário o grupo técnico responsável pelo item e o item reservável for um ativo personalizado sem grupo técnico, a 11.0.4 falha ao criar a reserva ("Empty IN are not allowed"), com ou sem este plugin. Defina um grupo técnico nesses ativos, remova esse destinatário da notificação ou atualize o GLPI.
+- **Notificação de reserva com "grupo técnico do item" (core 11.0.4):** se uma notificação de reserva tiver como destinatário o grupo técnico responsável pelo item e o item reservável não tiver grupo técnico (ativo personalizado ou nativo, como um periférico), a 11.0.4 falha ao criar a reserva ("Empty IN are not allowed"), com ou sem este plugin. Defina um grupo técnico nesses itens (os membros passam a receber essa notificação), ajuste os destinatários da notificação ou atualize o GLPI. Reservas criadas com `_disablenotif` não disparam a notificação.
 - **Pré-preenchimento do Form:** a 11.0.4 só pré-preenche perguntas cujo UUID não tenha `.`, como os gerados pelo editor de Forms atual.
 
 ## Limitações conhecidas e próximos passos (v2)
+
+Os riscos residuais abaixo foram avaliados e aceitos para a v0.1.0 em 2026-10-09.
 
 - **Duas reservas quase simultâneas:** se forem concluídas em abas diferentes dentro do mesmo segundo, a primeira aba a consultar recebe a oferta mais recente. O uso sequencial em várias abas funciona.
 - **Mesma reserva, vários pedidos:** o Form pode ser enviado mais de uma vez para a mesma reserva (vários chamados).
 - **Chamados abertos fora do Form:** chamados abertos manualmente na categoria Coffee Break não passam pela regra de 48 horas. Restrinja a categoria por perfil, se necessário.
 - **Escopo da trava:** a validação no envio vale apenas para o Form configurado em `coffee_form_id`. Cópias do Form não são protegidas.
+- **Abrir a oferta conta como entrega:** qualquer GET em `/offer/{id}` marca a oferta pendente como já mostrada. Se o usuário abrir essa URL antes do redirecionamento (por exemplo, em outra aba), o calendário não redireciona de novo para ela.
 - **Previstos para a v2:** configuração por entidade e um token de contexto de uso único, associado ao chamado, para correlacionar oferta, reserva e pedido.
 
 ## Licença
