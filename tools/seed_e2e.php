@@ -9,8 +9,9 @@
  *
  * Prints a JSON document with the created IDs on stdout. Never run it against
  * a production database. For a remote homologation server (tools/remote-e2e.sh)
- * E2E_GLPI_ROOT, E2E_SEED_ROOM_ITEMS and E2E_SEED_NON_ROOM_ITEM select the GLPI
- * root and existing reservable items instead of creating synthetic ones.
+ * E2E_GLPI_ROOT and E2E_SEED_ROOM_ITEMS select the GLPI root and the existing
+ * rooms; E2E_SEED_NON_ROOM_ITEM optionally selects an existing non-room item,
+ * otherwise a "[E2E-RC] Projetor" peripheral is created for it.
  */
 
 declare(strict_types=1);
@@ -189,11 +190,14 @@ $subEntityId = seed_find_or_create(Entity::class, ['name' => 'E2E Filial', 'enti
 $existingRoomIds = seed_id_list('E2E_SEED_ROOM_ITEMS');
 $existingNonRoomIds = seed_id_list('E2E_SEED_NON_ROOM_ITEM');
 if ($existingRoomIds !== []) {
-    if (count($existingRoomIds) !== 4 || count($existingNonRoomIds) !== 1) {
-        throw new RuntimeException('E2E_SEED_ROOM_ITEMS needs 4 IDs and E2E_SEED_NON_ROOM_ITEM 1 ID');
+    if (count($existingRoomIds) !== 4 || count($existingNonRoomIds) > 1) {
+        throw new RuntimeException('E2E_SEED_ROOM_ITEMS needs 4 IDs and E2E_SEED_NON_ROOM_ITEM at most 1 ID');
     }
     $rooms = array_map('seed_existing_reservable', $existingRoomIds);
-    $nonRoom = seed_existing_reservable($existingNonRoomIds[0]);
+    // Some servers forbid native reservations of their other items (e.g. vehicles booked through another plugin).
+    $nonRoom = $existingNonRoomIds !== []
+        ? seed_existing_reservable($existingNonRoomIds[0])
+        : ['name' => '[E2E-RC] Projetor'] + seed_reservable_peripheral('[E2E-RC] Projetor');
 } else {
     $rooms = [];
     foreach (['Sala de Reunião 01', 'Sala de Reunião 02', 'Sala de Reunião 03', 'Sala de Reunião 04'] as $roomName) {
