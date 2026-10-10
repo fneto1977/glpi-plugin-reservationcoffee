@@ -27,7 +27,7 @@ Reservas criadas pela API ou por linha de comando, edições e exclusões de res
 ## Instalação
 
 1. Baixe `reservationcoffee-<versão>.zip` e confira o `.sha256` publicado junto.
-2. Extraia o arquivo no diretório `plugins/` do GLPI. O resultado deve ser `plugins/reservationcoffee/setup.php`.
+2. Extraia o arquivo no diretório `plugins/` do GLPI. O resultado deve ser `plugins/reservationcoffee/setup.php`. Para atualizar uma instalação existente, extraia com `unzip -DD` ou rode `touch` nos arquivos depois. Os arquivos do pacote têm data fixa, e o OPcache do PHP continuaria servindo o código antigo se as datas não mudarem.
 3. Instale e ative:
 
    ```bash
