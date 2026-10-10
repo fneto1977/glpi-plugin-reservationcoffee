@@ -26,6 +26,7 @@
 
 use GlpiPlugin\Reservationcoffee\Config;
 use GlpiPlugin\Reservationcoffee\Service\CoffeeRequestGuard;
+use GlpiPlugin\Reservationcoffee\Service\CoffeeTicketDetails;
 use GlpiPlugin\Reservationcoffee\Service\ReservationListener;
 
 function plugin_reservationcoffee_install(): bool
@@ -52,4 +53,9 @@ function plugin_reservationcoffee_item_add_reservation(CommonDBTM $item): void
 function plugin_reservationcoffee_pre_item_add_answers_set(CommonDBTM $item): void
 {
     CoffeeRequestGuard::create()->beforeAdd($item);
+}
+
+function plugin_reservationcoffee_pre_item_add_ticket(CommonDBTM $item): void
+{
+    CoffeeTicketDetails::create()->beforeAdd($item);
 }

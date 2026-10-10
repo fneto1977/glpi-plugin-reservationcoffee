@@ -47,6 +47,7 @@ function plugin_init_reservationcoffee(): void
 
     $PLUGIN_HOOKS[Hooks::PRE_ITEM_ADD]['reservationcoffee'] = [
         AnswersSet::class => 'plugin_reservationcoffee_pre_item_add_answers_set',
+        Ticket::class     => 'plugin_reservationcoffee_pre_item_add_ticket',
     ];
 
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['reservationcoffee'][] = 'js/pending.js';

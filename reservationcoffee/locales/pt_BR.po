@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: reservationcoffee\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 13:10-0300\n"
+"POT-Creation-Date: 2026-10-09 23:25-0300\n"
 "PO-Revision-Date: 2026-10-09 00:00+0000\n"
 "Last-Translator: reservationcoffee contributors\n"
 "Language-Team: pt_BR\n"
@@ -12,30 +12,56 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: src/Controller/OfferCoffeeController.php:162
+#: src/Controller/OfferCoffeeController.php:182
 #: templates/offer_coffee.html.twig:14
 msgid "Coffee break"
 msgstr "Coffee Break"
 
-#: src/Service/CoffeeRequestGuard.php:79
+#: src/Service/CoffeeRequestGuard.php:82
 msgid "The coffee break request could not be validated. Please try again later."
 msgstr "Não foi possível validar a solicitação de Coffee Break. Tente novamente mais tarde."
 
-#: src/Service/CoffeeRequestGuard.php:97
+#: src/Service/CoffeeRequestGuard.php:103
 msgid "The coffee break request is not available at the moment."
 msgstr "A solicitação de Coffee Break não está disponível no momento."
 
-#: src/Service/CoffeeRequestGuard.php:104
+#: src/Service/CoffeeRequestGuard.php:112
 msgid "Please provide a valid reservation ID."
 msgstr "Informe um ID de reserva válido."
 
-#: src/Service/CoffeeRequestGuard.php:113
+#: src/Service/CoffeeRequestGuard.php:121
 msgid "This reservation was not found or does not allow a coffee break request."
 msgstr "Esta reserva não foi encontrada ou não permite a solicitação de Coffee Break."
 
-#: src/Service/CoffeeRequestGuard.php:117
+#: src/Service/CoffeeRequestGuard.php:125
 msgid "A coffee break must be requested at least 48 hours before the meeting starts."
 msgstr "O Coffee Break deve ser solicitado com no mínimo 48 horas de antecedência do início da reunião."
+
+#: src/Service/CoffeeRequestGuard.php:137
+msgid "Please provide a whole number of participants greater than zero."
+msgstr "Informe um número inteiro de participantes maior que zero."
+
+#: src/Service/CoffeeTicketDetails.php:84
+#, php-format
+msgid "Coffee Break - %1$s - %2$s - Reservation #%3$d"
+msgstr "Coffee Break - %1$s - %2$s - Reserva #%3$d"
+
+#: src/Service/CoffeeTicketDetails.php:98
+#, php-format
+msgid "Reservation #%d, as booked"
+msgstr "Reserva #%d, conforme registrada"
+
+#: src/Service/CoffeeTicketDetails.php:99 templates/offer_coffee.html.twig:32
+msgid "Room"
+msgstr "Sala"
+
+#: src/Service/CoffeeTicketDetails.php:101
+msgid "Start"
+msgstr "Início"
+
+#: src/Service/CoffeeTicketDetails.php:103
+msgid "End"
+msgstr "Término"
 
 #: templates/offer_coffee.html.twig:22
 msgid "There is no pending coffee break offer for this reservation."
@@ -44,10 +70,6 @@ msgstr "Não há oferta de Coffee Break pendente para esta reserva."
 #: templates/offer_coffee.html.twig:27
 msgid "Reservation created successfully"
 msgstr "Reserva criada com sucesso"
-
-#: templates/offer_coffee.html.twig:32
-msgid "Room"
-msgstr "Sala"
 
 #: templates/offer_coffee.html.twig:35
 msgid "Period"

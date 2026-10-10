@@ -114,7 +114,7 @@ final class OfferCoffeeController extends AbstractController
             return $this->renderState(self::STATE_NOT_ELIGIBLE, $context, Response::HTTP_CONFLICT);
         }
 
-        $formUrl = (new CoffeeFormLink($this->config, $this->urls->rootDoc()))->build($id);
+        $formUrl = (new CoffeeFormLink($this->config, $this->urls->rootDoc()))->build($context, (string) getUserName($usersId));
         if ($formUrl === null) {
             $this->logger->warning('offer_accept', PluginLogger::CATEGORY_CONFIGURATION, [
                 'reservation_id' => $id,
