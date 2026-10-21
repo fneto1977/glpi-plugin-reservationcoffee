@@ -103,6 +103,45 @@ final class ConfigTest extends TestCase
         self::assertSame([Config::KEY_RESERVABLE_ITEM_IDS], $config->invalidKeys);
     }
 
+    public function testPrefillQuestionsAreOptional(): void
+    {
+        $config = Config::fromRaw([
+            Config::KEY_REQUESTER_QUESTION_ID => '21',
+            Config::KEY_DATE_QUESTION_ID      => ' 22 ',
+            Config::KEY_TIME_QUESTION_ID      => '',
+        ]);
+
+        self::assertSame(
+            [Config::KEY_REQUESTER_QUESTION_ID => 21, Config::KEY_DATE_QUESTION_ID => 22],
+            $config->prefillQuestionIds,
+        );
+        self::assertSame([], $config->invalidKeys);
+    }
+
+    public function testInvalidPrefillQuestionIsIgnoredAndReported(): void
+    {
+        $config = Config::fromRaw([
+            Config::KEY_COFFEE_FORM_ID          => '7',
+            Config::KEY_RESERVATION_QUESTION_ID => '17',
+            Config::KEY_ROOM_QUESTION_ID        => '0',
+            Config::KEY_TIME_QUESTION_ID        => '23',
+        ]);
+
+        self::assertSame([Config::KEY_TIME_QUESTION_ID => 23], $config->prefillQuestionIds);
+        self::assertSame([Config::KEY_ROOM_QUESTION_ID], $config->invalidKeys);
+        self::assertTrue($config->isGuardEnabled());
+    }
+
+    public function testParticipantsQuestionIsOptional(): void
+    {
+        self::assertSame(0, Config::fromRaw([])->participantsQuestionId);
+        self::assertSame(24, Config::fromRaw([Config::KEY_PARTICIPANTS_QUESTION_ID => '24'])->participantsQuestionId);
+
+        $invalid = Config::fromRaw([Config::KEY_PARTICIPANTS_QUESTION_ID => '24a']);
+        self::assertSame(0, $invalid->participantsQuestionId);
+        self::assertSame([Config::KEY_PARTICIPANTS_QUESTION_ID], $invalid->invalidKeys);
+    }
+
     public function testDuplicatedItemsAreCollapsed(): void
     {
         self::assertSame([12, 13], Config::fromRaw([Config::KEY_RESERVABLE_ITEM_IDS => '12,13,12'])->reservableItemIds);

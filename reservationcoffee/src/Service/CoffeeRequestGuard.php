@@ -30,6 +30,7 @@ use CommonDBTM;
 use Glpi\Form\AnswersSet;
 use GlpiPlugin\Reservationcoffee\Config;
 use GlpiPlugin\Reservationcoffee\Domain\CoffeeEligibility;
+use GlpiPlugin\Reservationcoffee\Domain\ReservationContext;
 use GlpiPlugin\Reservationcoffee\Domain\SystemClock;
 use Session;
 use Throwable;
@@ -38,7 +39,8 @@ use Throwable;
  * `pre_item_add` handler for form answers. Re-applies the 48h rule on the
  * server whenever the coffee break form is submitted, including when it is
  * opened directly from the service catalog. Cancelling the `add()` makes GLPI
- * roll back the submission, so no ticket is created.
+ * roll back the submission, so no ticket is created. An accepted reservation
+ * is handed over to CoffeeTicketDetails for the ticket created next.
  */
 final class CoffeeRequestGuard
 {
@@ -66,6 +68,7 @@ final class CoffeeRequestGuard
         if (!$item instanceof AnswersSet || !is_array($item->input)) {
             return;
         }
+        CoffeeTicketDetails::forget();
 
         $formId = (int) ($item->input['forms_forms_id'] ?? 0);
         if ($this->config->coffeeFormId <= 0 || $formId !== $this->config->coffeeFormId) {
@@ -73,24 +76,27 @@ final class CoffeeRequestGuard
         }
 
         try {
-            $rejection = $this->findRejection($item->input);
+            $result = $this->check($item->input);
         } catch (Throwable $error) {
             $this->logger->error('guard_coffee_request', $error, ['form_id' => $formId]);
-            $rejection = __s('The coffee break request could not be validated. Please try again later.', 'reservationcoffee');
+            $result = __s('The coffee break request could not be validated. Please try again later.', 'reservationcoffee');
         }
 
-        if ($rejection !== null) {
-            Session::addMessageAfterRedirect($rejection, false, ERROR);
-            $item->input = false;
+        if ($result instanceof ReservationContext) {
+            CoffeeTicketDetails::remember($result);
+            return;
         }
+
+        Session::addMessageAfterRedirect($result, false, ERROR);
+        $item->input = false;
     }
 
     /**
      * @param array<string, mixed> $input
      *
-     * @return string|null HTML-escaped message, or null when the request is valid
+     * @return ReservationContext|string the reservation of a valid request, or an HTML-escaped rejection message
      */
-    private function findRejection(array $input): ?string
+    private function check(array $input): ReservationContext|string
     {
         if (!$this->config->isGuardEnabled()) {
             $this->logger->warning('guard_coffee_request', PluginLogger::CATEGORY_CONFIGURATION);
@@ -98,7 +104,9 @@ final class CoffeeRequestGuard
         }
 
         $usersId       = (int) ($input['users_id'] ?? 0);
-        $reservationId = $this->extractReservationId((string) ($input['answers'] ?? ''));
+        $answers       = json_decode((string) ($input['answers'] ?? ''), true);
+        $answers       = is_array($answers) ? $answers : [];
+        $reservationId = self::positiveInteger($answers, $this->config->reservationQuestionId);
         if ($reservationId === null) {
             $this->logger->warning('guard_coffee_request', PluginLogger::CATEGORY_VALIDATION, ['users_id' => $usersId]);
             return __s('Please provide a valid reservation ID.', 'reservationcoffee');
@@ -117,18 +125,28 @@ final class CoffeeRequestGuard
             return __s('A coffee break must be requested at least 48 hours before the meeting starts.', 'reservationcoffee');
         }
 
-        return null;
-    }
-
-    private function extractReservationId(string $json): ?int
-    {
-        $answers = json_decode($json, true);
-        if (!is_array($answers)) {
-            return null;
+        // GLPI skips the form validation conditions for answers it considers empty, such as "0".
+        if (
+            $this->config->participantsQuestionId > 0
+            && self::positiveInteger($answers, $this->config->participantsQuestionId) === null
+        ) {
+            $this->logger->warning('guard_coffee_request', PluginLogger::CATEGORY_VALIDATION, [
+                'users_id'       => $usersId,
+                'reservation_id' => $reservationId,
+            ]);
+            return __s('Please provide a whole number of participants greater than zero.', 'reservationcoffee');
         }
 
+        return $context;
+    }
+
+    /**
+     * @param array<mixed> $answers answers of the submitted answers set
+     */
+    private static function positiveInteger(array $answers, int $questionId): ?int
+    {
         foreach ($answers as $answer) {
-            if (!is_array($answer) || (int) ($answer['question_id'] ?? 0) !== $this->config->reservationQuestionId) {
+            if (!is_array($answer) || (int) ($answer['question_id'] ?? 0) !== $questionId) {
                 continue;
             }
 

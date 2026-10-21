@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import { seedPath } from './paths';
 import { loadEnv } from './env';
+import { assertSeedMatchesTarget } from './stack';
 
 export default async function globalSetup(): Promise<void> {
   const env = loadEnv();
@@ -11,4 +12,5 @@ export default async function globalSetup(): Promise<void> {
   if (response === null || response.status >= 500) {
     throw new Error(`GLPI is not reachable at ${env.baseUrl}; start docker/compose.e2e.yml first.`);
   }
+  assertSeedMatchesTarget();
 }

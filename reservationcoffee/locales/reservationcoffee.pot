@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 13:11-0300\n"
+"POT-Creation-Date: 2026-10-21 16:29-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,29 +17,55 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/Controller/OfferCoffeeController.php:162
+#: src/Controller/OfferCoffeeController.php:182
 #: templates/offer_coffee.html.twig:14
 msgid "Coffee break"
 msgstr ""
 
-#: src/Service/CoffeeRequestGuard.php:79
+#: src/Service/CoffeeRequestGuard.php:82
 msgid "The coffee break request could not be validated. Please try again later."
 msgstr ""
 
-#: src/Service/CoffeeRequestGuard.php:97
+#: src/Service/CoffeeRequestGuard.php:103
 msgid "The coffee break request is not available at the moment."
 msgstr ""
 
-#: src/Service/CoffeeRequestGuard.php:104
+#: src/Service/CoffeeRequestGuard.php:112
 msgid "Please provide a valid reservation ID."
 msgstr ""
 
-#: src/Service/CoffeeRequestGuard.php:113
+#: src/Service/CoffeeRequestGuard.php:121
 msgid "This reservation was not found or does not allow a coffee break request."
 msgstr ""
 
-#: src/Service/CoffeeRequestGuard.php:117
+#: src/Service/CoffeeRequestGuard.php:125
 msgid "A coffee break must be requested at least 48 hours before the meeting starts."
+msgstr ""
+
+#: src/Service/CoffeeRequestGuard.php:137
+msgid "Please provide a whole number of participants greater than zero."
+msgstr ""
+
+#: src/Service/CoffeeTicketDetails.php:84
+#, php-format
+msgid "Coffee Break - %1$s - %2$s - Reservation #%3$d"
+msgstr ""
+
+#: src/Service/CoffeeTicketDetails.php:98
+#, php-format
+msgid "Reservation #%d, as booked"
+msgstr ""
+
+#: src/Service/CoffeeTicketDetails.php:99 templates/offer_coffee.html.twig:32
+msgid "Room"
+msgstr ""
+
+#: src/Service/CoffeeTicketDetails.php:101
+msgid "Start"
+msgstr ""
+
+#: src/Service/CoffeeTicketDetails.php:103
+msgid "End"
 msgstr ""
 
 #: templates/offer_coffee.html.twig:22
@@ -48,10 +74,6 @@ msgstr ""
 
 #: templates/offer_coffee.html.twig:27
 msgid "Reservation created successfully"
-msgstr ""
-
-#: templates/offer_coffee.html.twig:32
-msgid "Room"
 msgstr ""
 
 #: templates/offer_coffee.html.twig:35

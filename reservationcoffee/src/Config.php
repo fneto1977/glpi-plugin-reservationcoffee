@@ -44,6 +44,19 @@ final class Config
     public const KEY_COFFEE_FORM_ID         = 'coffee_form_id';
     public const KEY_RESERVATION_QUESTION_ID = 'reservation_question_id';
     public const KEY_PENDING_TTL_SECONDS    = 'pending_ttl_seconds';
+    public const KEY_REQUESTER_QUESTION_ID  = 'requester_question_id';
+    public const KEY_DATE_QUESTION_ID       = 'date_question_id';
+    public const KEY_TIME_QUESTION_ID       = 'time_question_id';
+    public const KEY_ROOM_QUESTION_ID       = 'room_question_id';
+    public const KEY_PARTICIPANTS_QUESTION_ID = 'participants_question_id';
+
+    /** Optional questions of the coffee form pre-filled from the reservation and the logged-in user. */
+    public const PREFILL_KEYS = [
+        self::KEY_REQUESTER_QUESTION_ID,
+        self::KEY_DATE_QUESTION_ID,
+        self::KEY_TIME_QUESTION_ID,
+        self::KEY_ROOM_QUESTION_ID,
+    ];
 
     public const MIN_NOTICE_SECONDS = 48 * 60 * 60;
 
@@ -54,6 +67,8 @@ final class Config
     /**
      * @param list<int>    $reservableItemIds IDs of `ReservationItem` rows (not of the underlying assets)
      * @param list<string> $invalidKeys       keys holding a value that could not be parsed
+     * @param array<string, int> $prefillQuestionIds question ID per `PREFILL_KEYS` entry, set ones only
+     * @param int          $participantsQuestionId question whose answer must be a positive integer, 0 when unchecked
      */
     public function __construct(
         public readonly array $reservableItemIds,
@@ -61,6 +76,8 @@ final class Config
         public readonly int $reservationQuestionId,
         public readonly int $pendingTtlSeconds,
         public readonly array $invalidKeys = [],
+        public readonly array $prefillQuestionIds = [],
+        public readonly int $participantsQuestionId = 0,
     ) {}
 
     public static function load(): self
@@ -94,6 +111,19 @@ final class Config
         if ($ttl === null) {
             $invalid[] = self::KEY_PENDING_TTL_SECONDS;
         }
+        $prefill = [];
+        foreach (self::PREFILL_KEYS as $key) {
+            $prefillId = self::parseOptionalId($raw[$key] ?? null);
+            if ($prefillId === null) {
+                $invalid[] = $key;
+            } elseif ($prefillId > 0) {
+                $prefill[$key] = $prefillId;
+            }
+        }
+        $participantsId = self::parseOptionalId($raw[self::KEY_PARTICIPANTS_QUESTION_ID] ?? null);
+        if ($participantsId === null) {
+            $invalid[] = self::KEY_PARTICIPANTS_QUESTION_ID;
+        }
 
         return new self(
             $itemIds ?? [],
@@ -101,6 +131,8 @@ final class Config
             $questionId ?? 0,
             $ttl ?? self::DEFAULT_PENDING_TTL_SECONDS,
             $invalid,
+            $prefill,
+            $participantsId ?? 0,
         );
     }
 
@@ -112,7 +144,8 @@ final class Config
             self::KEY_COFFEE_FORM_ID          => '',
             self::KEY_RESERVATION_QUESTION_ID => '',
             self::KEY_PENDING_TTL_SECONDS     => (string) self::DEFAULT_PENDING_TTL_SECONDS,
-        ];
+            self::KEY_PARTICIPANTS_QUESTION_ID => '',
+        ] + array_fill_keys(self::PREFILL_KEYS, '');
 
         $missing = array_diff_key($defaults, $current);
         if ($missing !== []) {
@@ -127,6 +160,8 @@ final class Config
             self::KEY_COFFEE_FORM_ID,
             self::KEY_RESERVATION_QUESTION_ID,
             self::KEY_PENDING_TTL_SECONDS,
+            self::KEY_PARTICIPANTS_QUESTION_ID,
+            ...self::PREFILL_KEYS,
         ]);
     }
 

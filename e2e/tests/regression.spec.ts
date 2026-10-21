@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { test, expect, isReservationReturn, offerCard, OFFER_URL, PENDING_PATH, reserve, reserveAndExpectOffer, waitForPending } from '../support/fixtures';
 import { seed } from '../support/seed';
 import { glpiConsole, sql } from '../support/stack';
-import { DAY, startIn } from '../support/time';
+import { DAY, atServerHour, startIn } from '../support/time';
 
 const ROOM = () => seed().rooms[0];
 
@@ -25,7 +25,8 @@ function trackPageErrors(page: Page): string[] {
 test.describe('Regression of native reservation features', () => {
   test('E2E-24 weekly series creates every occurrence and a single offer', async ({ as }) => {
     const page = await as('selfservice');
-    const begin = startIn(3 * DAY);
+    // GLPI computes weekly occurrences with an end before their start when the reservation crosses midnight.
+    const begin = atServerHour(startIn(3 * DAY), 14);
 
     const offerId = await reserveAndExpectOffer(page, ROOM().reservationitem_id, begin, {
       weeklyUntil: new Date(begin.getTime() + 15 * DAY),

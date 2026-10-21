@@ -32,6 +32,12 @@ export function weekdayName(instant: Date): string {
   return new Intl.DateTimeFormat('en-US', { timeZone: loadEnv().timezone, weekday: 'long' }).format(instant);
 }
 
+/** `hour`:00 on the same server-timezone day as `instant` (the E2E timezones have no DST). */
+export function atServerHour(instant: Date, hour: number): Date {
+  const [h, m, s] = glpiDateTime(instant).slice(11).split(':').map(Number);
+  return new Date(instant.getTime() - ((h * 60 + m) * 60 + s) * 1000 + hour * HOUR);
+}
+
 export function slotFloor(ms: number): Date {
   return new Date(Math.floor(ms / SLOT) * SLOT);
 }
