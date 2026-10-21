@@ -102,14 +102,16 @@ final class CoffeeFormTest extends IntegrationTestCase
     /**
      * @param array<int, mixed> $answers
      */
-    private function submit(int $usersId, array $answers): Ticket
+    private function submit(int $usersId, array $answers): ?Ticket
     {
         $form = Form::getById($this->formId());
         $answers = AnswersHandler::getInstance()->removeUnusedAnswers($form, $answers);
         $answersSet = AnswersHandler::getInstance()->saveAnswers($form, $answers, $usersId);
 
         $tickets = array_values(array_filter($answersSet->getCreatedItems(), static fn($item) => $item instanceof Ticket));
-        self::assertCount(1, $tickets);
+        if ($tickets === []) {
+            return null;
+        }
 
         return Ticket::getById($tickets[0]->getID());
     }
@@ -223,16 +225,14 @@ final class CoffeeFormTest extends IntegrationTestCase
         self::assertSame(CoffeeTicketDetails::summary($context), substr($content, 0, strlen(CoffeeTicketDetails::summary($context))));
     }
 
-    public function testDeclinedCoffeeBreakTicketHasNoItems(): void
+    public function testDeclinedCoffeeBreakCreatesNoTicket(): void
     {
         $owner = $this->loginAs('e2e.selfservice');
         $context = $this->context((int) $this->createReservation(self::ROOM, $owner, $this->startIn(4 * 86400))->getID());
 
         $ticket = $this->submit($owner, $this->answers($context->reservationId, ['Necessita de Coffee Break' => 'nao']));
 
-        self::assertSame(CoffeeTicketDetails::title($context), $ticket->fields['name']);
-        self::assertStringContainsString('Não', (string) $ticket->fields['content']);
-        self::assertStringNotContainsString('Itens solicitados', (string) $ticket->fields['content']);
+        self::assertNull($ticket);
     }
 
     public function testShortNoticeIsRejectedByTheReservationIdWhateverTheEditedDate(): void

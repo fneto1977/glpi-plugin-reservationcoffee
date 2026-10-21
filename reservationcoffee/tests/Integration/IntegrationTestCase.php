@@ -30,6 +30,23 @@ abstract class IntegrationTestCase extends TestCase
     /** @var list<int> */
     private array $createdReservations = [];
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        global $DB;
+        $itemIds = [];
+        foreach ([self::ROOM, self::OTHER_ROOM, self::NON_ROOM] as $name) {
+            try {
+                $itemIds[] = $this->reservationItemId($name);
+            } catch (RuntimeException) {
+                // Ignore if the fixture item is not present yet.
+            }
+        }
+        if ($itemIds !== []) {
+            $DB->delete('glpi_reservations', ['reservationitems_id' => $itemIds]);
+        }
+    }
+
     protected function tearDown(): void
     {
         $this->loginAs('glpi');

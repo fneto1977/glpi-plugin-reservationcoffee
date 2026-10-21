@@ -62,6 +62,7 @@ Destino **Chamado** (Ticket):
 
 - **Categoria:** Administrativo > Coffee Break;
 - **Atribuído a:** grupo Facilities / Copa;
+- **Criação condicionada:** criado apenas se "Necessita de Coffee Break" for igual a `sim`. Se o usuário responder `Não`, o chamado não é aberto;
 - **Título:** `Coffee Break - <Sala> - <Data> <Horário de início> - Reserva #<ID da reserva>`, com as respostas. O plugin substitui esse título pelos dados reais da reserva (veja [Como funciona](#como-funciona)), e o modelo nativo vale se o plugin estiver desativado;
 - **Descrição:** a configuração automática, que lista todas as perguntas respondidas, inclusive participantes e itens.
 
@@ -177,7 +178,6 @@ Os riscos residuais abaixo foram avaliados e aceitos para a v0.1.0 em 2026-10-09
 
 - **Duas reservas quase simultâneas:** se forem concluídas em abas diferentes dentro do mesmo segundo, a primeira aba a consultar recebe a oferta mais recente. O uso sequencial em várias abas funciona.
 - **Campos editáveis:** Solicitante, Data, Horário de início e Sala podem ser alterados no Form. O título e o resumo do chamado sempre vêm da reserva, mas as respostas digitadas também aparecem na descrição.
-- **Chamado sem Coffee Break:** com "Necessita de Coffee Break" = Não, o chamado também é criado, sem itens.
 - **Mesma reserva, vários pedidos:** o Form pode ser enviado mais de uma vez para a mesma reserva (vários chamados).
 - **Chamados abertos fora do Form:** chamados abertos manualmente na categoria Coffee Break não passam pela regra de 48 horas. Restrinja a categoria por perfil, se necessário.
 - **Escopo da trava:** a validação no envio vale apenas para o Form configurado em `coffee_form_id`. Cópias do Form não são protegidas.

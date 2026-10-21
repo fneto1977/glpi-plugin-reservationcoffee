@@ -23,6 +23,7 @@ declare(strict_types=1);
 use Glpi\Form\AccessControl\ControlType\AllowList;
 use Glpi\Form\AccessControl\ControlType\AllowListConfig;
 use Glpi\Form\AccessControl\FormAccessControl;
+use Glpi\Form\Condition\CreationStrategy;
 use Glpi\Form\Condition\LogicOperator;
 use Glpi\Form\Condition\ValidationStrategy;
 use Glpi\Form\Condition\ValueOperator;
@@ -419,9 +420,16 @@ if ($formCreated) {
 // The stored configuration of the other fields is kept as is, the way GLPI's own form import updates it.
 $tag = static fn(string $key): string => (new AnswerTagProvider())->getTagForQuestion($questions[$key])->html;
 $updated = $destination->update([
-    'id'           => $destination->getID(),
-    '_from_import' => true,
-    'config'       => [
+    'id'                => $destination->getID(),
+    '_from_import'      => true,
+    'creation_strategy' => CreationStrategy::CREATED_IF->value,
+    '_conditions'       => [[
+        'item'           => 'question-' . $questions['needs_coffee']->fields['uuid'],
+        'value_operator' => ValueOperator::EQUALS->value,
+        'value'          => 'sim',
+        'logic_operator' => LogicOperator::AND->value,
+    ]],
+    'config'            => [
         TitleField::getKey() => [
             SimpleValueConfig::VALUE => sprintf(
                 'Coffee Break - %s - %s %s - Reserva #%s',

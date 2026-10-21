@@ -54,11 +54,8 @@ test.describe('Coffee break request form', () => {
     expect(ticketsAfter(before)).toHaveLength(0);
 
     await submitCoffeeRequest(page, { needsCoffee: 'nao' });
-    await expect.poll(() => ticketsAfter(before).length, { timeout: 15_000 }).toBe(1);
-    const content = decodeHtml(String(ticketsAfter(before)[0].content));
-    expect(content).toContain(`Reserva #${reservationId}`);
-    expect(content).toContain('Não');
-    expect(content).not.toContain('Itens solicitados');
+    await expect(page.getByText('Seu formulário foi enviado com sucesso.')).toBeVisible();
+    expect(ticketsAfter(before)).toHaveLength(0);
   });
 
   test('E2E-33 the 48h rule follows the reservation ID, not the edited date', async ({ as }) => {
