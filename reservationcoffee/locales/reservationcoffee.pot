@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-21 16:29-0300\n"
+"POT-Creation-Date: 2026-10-21 23:29-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,27 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: front/config.form.php:41
+msgid "Reservation Coffee Break"
+msgstr ""
+
+#: src/Controller/ConfigController.php:140
+msgid "Configuration saved successfully."
+msgstr ""
+
+#: src/Controller/ConfigController.php:167
+msgid "Default coffee break form created and configured successfully."
+msgstr ""
+
+#: src/Controller/ConfigController.php:173
+msgid "The default coffee break form already exists. Associated configuration updated."
+msgstr ""
+
+#: src/Controller/ConfigController.php:179
+#, php-format
+msgid "Failed to provision form: %s"
+msgstr ""
 
 #: src/Controller/OfferCoffeeController.php:182
 #: templates/offer_coffee.html.twig:14
@@ -66,6 +87,160 @@ msgstr ""
 
 #: src/Service/CoffeeTicketDetails.php:103
 msgid "End"
+msgstr ""
+
+#: src/Service/FormProvisioner.php:94
+msgid "The default coffee break form already exists."
+msgstr ""
+
+#: src/Service/FormProvisioner.php:119
+msgid "Solicite o Coffee Break para a sua reunião (mínimo de 48 horas de antecedência)."
+msgstr ""
+
+#: src/Service/FormProvisioner.php:139
+msgid "Geral"
+msgstr ""
+
+#: src/Service/FormProvisioner.php:157
+msgid "Default coffee break form successfully created."
+msgstr ""
+
+#: templates/config.html.twig:8
+msgid "Coffee Break Reservation Settings"
+msgstr ""
+
+#: templates/config.html.twig:11
+msgid "Configure reservable meeting rooms, associate the coffee break form, and map questions for automatic pre-fill."
+msgstr ""
+
+#: templates/config.html.twig:22
+msgid "Plugin Active and Operational"
+msgstr ""
+
+#: templates/config.html.twig:23
+msgid "Meeting room reservations will display the coffee break offer and pre-fill the selected form."
+msgstr ""
+
+#: templates/config.html.twig:30
+msgid "Configuration Incomplete (Fail-Closed)"
+msgstr ""
+
+#: templates/config.html.twig:32
+msgid "The plugin is currently dormant until the required settings are completed. Native reservations remain unaffected."
+msgstr ""
+
+#: templates/config.html.twig:35
+msgid "No meeting rooms selected."
+msgstr ""
+
+#: templates/config.html.twig:38
+msgid "No coffee break form selected."
+msgstr ""
+
+#: templates/config.html.twig:41
+msgid "Question \"ID da reserva\" is not mapped (mandatory for security validation)."
+msgstr ""
+
+#: templates/config.html.twig:55
+msgid "Default Coffee Break Form"
+msgstr ""
+
+#: templates/config.html.twig:58
+msgid "Provision or link the standard coffee break form (\"Solicitação de Coffee Break\") with all 9 questions, conditional visibility, and ticket destination."
+msgstr ""
+
+#: templates/config.html.twig:66
+msgid "Provision / Restore Default Form"
+msgstr ""
+
+#: templates/config.html.twig:84
+msgid "Reservable Meeting Rooms"
+msgstr ""
+
+#: templates/config.html.twig:89
+msgid "Select the meeting rooms that will offer the coffee break service when reserved."
+msgstr ""
+
+#: templates/config.html.twig:93
+msgid "Rooms with coffee break offer"
+msgstr ""
+
+#: templates/config.html.twig:112
+msgid "Hold Ctrl (or Cmd on Mac) to select multiple rooms."
+msgstr ""
+
+#: templates/config.html.twig:125
+msgid "Form and Execution Options"
+msgstr ""
+
+#: templates/config.html.twig:131
+msgid "Coffee Break Form"
+msgstr ""
+
+#: templates/config.html.twig:139
+msgid "Select a form"
+msgstr ""
+
+#: templates/config.html.twig:150
+msgid "Form presented to the user after reserving a participating room."
+msgstr ""
+
+#: templates/config.html.twig:156
+msgid "Offer expiration TTL (seconds)"
+msgstr ""
+
+#: templates/config.html.twig:169
+msgid "Allowed range: 5 to 3600 seconds (default: 300 = 5 minutes)."
+msgstr ""
+
+#: templates/config.html.twig:182
+msgid "Form Question Mapping"
+msgstr ""
+
+#: templates/config.html.twig:187
+msgid "Map the fields of the selected form to the corresponding reservation and user attributes."
+msgstr ""
+
+#: templates/config.html.twig:194
+msgid "Reservation ID (Mandatory)"
+msgstr ""
+
+#: templates/config.html.twig:202
+msgid "Select a question"
+msgstr ""
+
+#: templates/config.html.twig:213
+msgid "Essential for linking the ticket to the reservation and preventing unauthorized submissions."
+msgstr ""
+
+#: templates/config.html.twig:220
+msgid "Requester Name (Optional)"
+msgstr ""
+
+#: templates/config.html.twig:228 templates/config.html.twig:251
+#: templates/config.html.twig:274 templates/config.html.twig:297
+#: templates/config.html.twig:320
+msgid "None / Not mapped"
+msgstr ""
+
+#: templates/config.html.twig:243
+msgid "Reservation Date (Optional)"
+msgstr ""
+
+#: templates/config.html.twig:266
+msgid "Start Time (Optional)"
+msgstr ""
+
+#: templates/config.html.twig:289
+msgid "Room Name (Optional)"
+msgstr ""
+
+#: templates/config.html.twig:312
+msgid "Participants Count (Optional)"
+msgstr ""
+
+#: templates/config.html.twig:336
+msgid "Save Settings"
 msgstr ""
 
 #: templates/offer_coffee.html.twig:22

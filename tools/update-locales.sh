@@ -11,7 +11,7 @@ pot="$locales/reservationcoffee.pot"
 keywords=(--keyword=__ --keyword=__s --keyword=_n:1,2 --keyword=_sn:1,2 --keyword=_x:1c,2 --keyword=_sx:1c,2 --keyword=_nx:1c,2,3)
 
 cd "$plugin"
-php_files=$(find setup.php hook.php src -name '*.php' | sort)
+php_files=$(find setup.php hook.php src front ajax -name '*.php' 2>/dev/null | sort)
 twig_files=$(find templates -name '*.twig' | sort)
 
 # shellcheck disable=SC2086

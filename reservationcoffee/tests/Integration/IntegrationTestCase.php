@@ -57,6 +57,23 @@ abstract class IntegrationTestCase extends TestCase
         parent::tearDown();
     }
 
+    protected function restoreConfig(\GlpiPlugin\Reservationcoffee\Config $config): void
+    {
+        $values = [
+            \GlpiPlugin\Reservationcoffee\Config::KEY_RESERVABLE_ITEM_IDS      => implode(',', $config->reservableItemIds),
+            \GlpiPlugin\Reservationcoffee\Config::KEY_COFFEE_FORM_ID           => (string) $config->coffeeFormId,
+            \GlpiPlugin\Reservationcoffee\Config::KEY_RESERVATION_QUESTION_ID  => (string) $config->reservationQuestionId,
+            \GlpiPlugin\Reservationcoffee\Config::KEY_PENDING_TTL_SECONDS      => (string) $config->pendingTtlSeconds,
+            \GlpiPlugin\Reservationcoffee\Config::KEY_PARTICIPANTS_QUESTION_ID => (string) $config->participantsQuestionId,
+        ];
+        foreach (\GlpiPlugin\Reservationcoffee\Config::PREFILL_KEYS as $key) {
+            $values[$key] = isset($config->prefillQuestionIds[$key])
+                ? (string) $config->prefillQuestionIds[$key]
+                : '';
+        }
+        \GlpiPlugin\Reservationcoffee\Config::save($values);
+    }
+
     protected function loginAs(string $login): int
     {
         $auth = new Auth();

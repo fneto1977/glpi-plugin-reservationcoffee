@@ -1,0 +1,345 @@
+<div class="reservationcoffee-config-container p-3">
+    {# Page Header #}
+    <div class="page-header d-print-none mb-3">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title text-primary">
+                    <i class="ti ti-coffee me-2"></i>
+                    {{ __('Coffee Break Reservation Settings', 'reservationcoffee') }}
+                </h2>
+                <div class="text-muted mt-1">
+                    {{ __('Configure reservable meeting rooms, associate the coffee break form, and map questions for automatic pre-fill.', 'reservationcoffee') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Operational Status Banner #}
+    {% if status.is_operational %}
+        <div class="alert alert-success d-flex align-items-center mb-3" role="alert" id="status-operational">
+            <i class="ti ti-circle-check fs-2 me-2"></i>
+            <div>
+                <h4 class="alert-title mb-1">{{ __('Plugin Active and Operational', 'reservationcoffee') }}</h4>
+                <div class="text-secondary">{{ __('Meeting room reservations will display the coffee break offer and pre-fill the selected form.', 'reservationcoffee') }}</div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-warning d-flex align-items-center mb-3" role="alert" id="status-incomplete">
+            <i class="ti ti-alert-triangle fs-2 me-2"></i>
+            <div>
+                <h4 class="alert-title mb-1">{{ __('Configuration Incomplete (Fail-Closed)', 'reservationcoffee') }}</h4>
+                <div class="text-secondary">
+                    {{ __('The plugin is currently dormant until the required settings are completed. Native reservations remain unaffected.', 'reservationcoffee') }}
+                    <ul class="mb-0 mt-1 ps-3">
+                        {% if not status.has_rooms %}
+                            <li>{{ __('No meeting rooms selected.', 'reservationcoffee') }}</li>
+                        {% endif %}
+                        {% if not status.has_form %}
+                            <li>{{ __('No coffee break form selected.', 'reservationcoffee') }}</li>
+                        {% endif %}
+                        {% if not status.has_res_question %}
+                            <li>{{ __('Question "ID da reserva" is not mapped (mandatory for security validation).', 'reservationcoffee') }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {# Quick Action: Provision Default Form #}
+    <div class="card mb-3 border-primary shadow-sm">
+        <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h3 class="card-title text-primary mb-1">
+                    <i class="ti ti-wand me-1"></i>
+                    {{ __('Default Coffee Break Form', 'reservationcoffee') }}
+                </h3>
+                <div class="text-muted">
+                    {{ __('Provision or link the standard coffee break form ("Solicitação de Coffee Break") with all 9 questions, conditional visibility, and ticket destination.', 'reservationcoffee') }}
+                </div>
+            </div>
+            <form method="post" action="{{ action_url }}" class="m-0">
+                <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="provision_form" value="1">
+                <button type="submit" class="btn btn-outline-primary" id="btn-provision-default-form">
+                    <i class="ti ti-bolt me-1"></i>
+                    {{ __('Provision / Restore Default Form', 'reservationcoffee') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# Main Configuration Form #}
+    <form method="post" action="{{ action_url }}" id="reservationcoffee-config-form">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="save_config" value="1">
+
+        <div class="row row-cards">
+            {# Card 1: Reservable Meeting Rooms #}
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="ti ti-door me-2 text-primary"></i>
+                            {{ __('Reservable Meeting Rooms', 'reservationcoffee') }}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            {{ __('Select the meeting rooms that will offer the coffee break service when reserved.', 'reservationcoffee') }}
+                        </p>
+                        <div class="form-group mb-3">
+                            <label class="form-label" for="reservable_item_ids">
+                                {{ __('Rooms with coffee break offer', 'reservationcoffee') }}
+                            </label>
+                            <select
+                                class="form-select"
+                                name="reservable_item_ids[]"
+                                id="reservable_item_ids"
+                                multiple
+                                size="7"
+                            >
+                                {% for id, name in reservable_items %}
+                                    <option
+                                        value="{{ id }}"
+                                        {% if id in config.reservableItemIds %}selected{% endif %}
+                                    >
+                                        {{ name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-hint">
+                                {{ __('Hold Ctrl (or Cmd on Mac) to select multiple rooms.', 'reservationcoffee') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Card 2: Form Selection & Advanced #}
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="ti ti-forms me-2 text-primary"></i>
+                            {{ __('Form and Execution Options', 'reservationcoffee') }}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label class="form-label required" for="coffee_form_id">
+                                {{ __('Coffee Break Form', 'reservationcoffee') }}
+                            </label>
+                            <select
+                                class="form-select"
+                                name="coffee_form_id"
+                                id="coffee_form_id"
+                                data-ajax-url="{{ ajax_url }}"
+                            >
+                                <option value="">-- {{ __('Select a form', 'reservationcoffee') }} --</option>
+                                {% for id, name in forms %}
+                                    <option
+                                        value="{{ id }}"
+                                        {% if id == config.coffeeFormId %}selected{% endif %}
+                                    >
+                                        {{ name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-hint">
+                                {{ __('Form presented to the user after reserving a participating room.', 'reservationcoffee') }}
+                            </small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label" for="pending_ttl_seconds">
+                                {{ __('Offer expiration TTL (seconds)', 'reservationcoffee') }}
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                name="pending_ttl_seconds"
+                                id="pending_ttl_seconds"
+                                value="{{ config.pendingTtlSeconds }}"
+                                min="5"
+                                max="3600"
+                                step="1"
+                            >
+                            <small class="form-hint">
+                                {{ __('Allowed range: 5 to 3600 seconds (default: 300 = 5 minutes).', 'reservationcoffee') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Card 3: Question Mapping #}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="ti ti-link me-2 text-primary"></i>
+                            {{ __('Form Question Mapping', 'reservationcoffee') }}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            {{ __('Map the fields of the selected form to the corresponding reservation and user attributes.', 'reservationcoffee') }}
+                        </p>
+
+                        <div class="row g-3">
+                            {# Mandatory: ID da reserva #}
+                            <div class="col-md-6">
+                                <label class="form-label text-danger fw-bold" for="reservation_question_id">
+                                    {{ __('Reservation ID (Mandatory)', 'reservationcoffee') }} *
+                                </label>
+                                <select
+                                    class="form-select"
+                                    name="reservation_question_id"
+                                    id="reservation_question_id"
+                                    data-none-text="-- {{ __('Select a question', 'reservationcoffee') }} --"
+                                >
+                                    <option value="">-- {{ __('Select a question', 'reservationcoffee') }} --</option>
+                                    {% for q in questions %}
+                                        <option
+                                            value="{{ q.id }}"
+                                            {% if q.id == config.reservationQuestionId %}selected{% endif %}
+                                        >
+                                            {{ q.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-hint">
+                                    {{ __('Essential for linking the ticket to the reservation and preventing unauthorized submissions.', 'reservationcoffee') }}
+                                </small>
+                            </div>
+
+                            {# Solicitante #}
+                            <div class="col-md-6">
+                                <label class="form-label" for="requester_question_id">
+                                    {{ __('Requester Name (Optional)', 'reservationcoffee') }}
+                                </label>
+                                <select
+                                    class="form-select"
+                                    name="requester_question_id"
+                                    id="requester_question_id"
+                                    data-none-text="-- {{ __('None / Not mapped', 'reservationcoffee') }} --"
+                                >
+                                    <option value="">-- {{ __('None / Not mapped', 'reservationcoffee') }} --</option>
+                                    {% for q in questions %}
+                                        <option
+                                            value="{{ q.id }}"
+                                            {% if q.id == config.prefillQuestionIds['requester_question_id']|default(0) %}selected{% endif %}
+                                        >
+                                            {{ q.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            {# Data #}
+                            <div class="col-md-6">
+                                <label class="form-label" for="date_question_id">
+                                    {{ __('Reservation Date (Optional)', 'reservationcoffee') }}
+                                </label>
+                                <select
+                                    class="form-select"
+                                    name="date_question_id"
+                                    id="date_question_id"
+                                    data-none-text="-- {{ __('None / Not mapped', 'reservationcoffee') }} --"
+                                >
+                                    <option value="">-- {{ __('None / Not mapped', 'reservationcoffee') }} --</option>
+                                    {% for q in questions %}
+                                        <option
+                                            value="{{ q.id }}"
+                                            {% if q.id == config.prefillQuestionIds['date_question_id']|default(0) %}selected{% endif %}
+                                        >
+                                            {{ q.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            {# Horário #}
+                            <div class="col-md-6">
+                                <label class="form-label" for="time_question_id">
+                                    {{ __('Start Time (Optional)', 'reservationcoffee') }}
+                                </label>
+                                <select
+                                    class="form-select"
+                                    name="time_question_id"
+                                    id="time_question_id"
+                                    data-none-text="-- {{ __('None / Not mapped', 'reservationcoffee') }} --"
+                                >
+                                    <option value="">-- {{ __('None / Not mapped', 'reservationcoffee') }} --</option>
+                                    {% for q in questions %}
+                                        <option
+                                            value="{{ q.id }}"
+                                            {% if q.id == config.prefillQuestionIds['time_question_id']|default(0) %}selected{% endif %}
+                                        >
+                                            {{ q.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            {# Sala #}
+                            <div class="col-md-6">
+                                <label class="form-label" for="room_question_id">
+                                    {{ __('Room Name (Optional)', 'reservationcoffee') }}
+                                </label>
+                                <select
+                                    class="form-select"
+                                    name="room_question_id"
+                                    id="room_question_id"
+                                    data-none-text="-- {{ __('None / Not mapped', 'reservationcoffee') }} --"
+                                >
+                                    <option value="">-- {{ __('None / Not mapped', 'reservationcoffee') }} --</option>
+                                    {% for q in questions %}
+                                        <option
+                                            value="{{ q.id }}"
+                                            {% if q.id == config.prefillQuestionIds['room_question_id']|default(0) %}selected{% endif %}
+                                        >
+                                            {{ q.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            {# Participantes #}
+                            <div class="col-md-6">
+                                <label class="form-label" for="participants_question_id">
+                                    {{ __('Participants Count (Optional)', 'reservationcoffee') }}
+                                </label>
+                                <select
+                                    class="form-select"
+                                    name="participants_question_id"
+                                    id="participants_question_id"
+                                    data-none-text="-- {{ __('None / Not mapped', 'reservationcoffee') }} --"
+                                >
+                                    <option value="">-- {{ __('None / Not mapped', 'reservationcoffee') }} --</option>
+                                    {% for q in questions %}
+                                        <option
+                                            value="{{ q.id }}"
+                                            {% if q.id == config.participantsQuestionId %}selected{% endif %}
+                                        >
+                                            {{ q.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="submit" class="btn btn-primary" id="btn-save-config">
+                            <i class="ti ti-device-floppy me-1"></i>
+                            {{ __('Save Settings', 'reservationcoffee') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="{{ js_url }}"></script>

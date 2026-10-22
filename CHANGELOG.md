@@ -2,6 +2,23 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.2.0] - 2026-10-22
+
+### Adicionado
+
+- **Interface Gráfica de Configuração**: Tela nativa de administração acessível em **Administração > Plugins > Configurar** (`front/config.form.php`), desenvolvida no design system Tabler do GLPI 11 com proteção CSRF e controle de acesso estrito (`Session::checkRight('config', UPDATE)`).
+- **Provisionamento Automático e Idempotente do Formulário**:
+  - Provisionamento automático na instalação do plugin (`plugin_reservationcoffee_install`) e botão de 1 clique na interface gráfica ("Provisionar / Restaurar Formulário Padrão").
+  - Criação completa do formulário padrão ("Solicitação de Coffee Break") com 9 perguntas, visibilidade condicional dos itens solicitados e destino de chamado condicionado a "Necessita de Coffee Break" = `sim` (`creation_strategy = CREATED_IF`).
+  - Idempotência: caso o formulário padrão já exista, o provisionamento preserva os dados existentes sem duplicar registros e atualiza o mapeamento de IDs nas configurações.
+- **Mapeamento Dinâmico de Perguntas via AJAX**: Dropdown interativo com atualização em tempo real via endpoint `ajax/form_questions.php` e script `public/js/config.js` com auto-detecção de campos por padrão de nomenclatura.
+- **Card de Diagnóstico Operacional**: Indicador em tempo real do estado do plugin ("Ativo e Operacional" ou "Configuração Incompleta - Fail-Closed" apontando exatamente os itens faltantes).
+- **Suporte Multilíngue Completo**: Suporte a `pt_BR`, `en_GB`, `en_US` e `es_ES` com catálogo 100% traduzido para toda a interface e mensagens de feedback.
+- **Testes Automatizados (TEST-01 a TEST-14)**:
+  - Testes unitários para `FormProvisionResult`;
+  - 10 novos testes de integração cobrindo `FormProvisioner`, hook de instalação, controle de acesso, submissão de formulário, CSRF, endpoint AJAX e botão de provisionamento;
+  - 5 novos testes E2E Playwright (`admin-config.spec.ts`, E2E-40 a E2E-44).
+
 ## [0.1.0] - 2026-10-09
 
 ### Adicionado
