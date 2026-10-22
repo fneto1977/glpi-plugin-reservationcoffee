@@ -40,37 +40,27 @@ Enquanto não for configurado (próxima seção), o plugin fica inerte: sem conf
 
 ## Configuração
 
-### 1. Formulário nativo de Coffee Break
+### 1. Interface Gráfica no GLPI (Recomendado)
 
-Crie pelo administrador de formulários do GLPI (Administração > Formulários) o Form **"Solicitação de Coffee Break"** com:
+A partir da versão **0.2.0**, todo o gerenciamento do plugin pode ser feito diretamente pela interface web do GLPI:
 
-| Pergunta | Tipo | Obrigatória | Preenchida pelo plugin | Condição |
-| --- | --- | --- | --- | --- |
-| ID da reserva | Número | Sim | Sim | — |
-| Solicitante | Texto curto | Não | Nome do usuário logado | — |
-| Data | Texto curto | Não | Data de início, no formato de data do usuário | — |
-| Horário de início | Texto curto | Não | `HH:MM` | — |
-| Sala | Texto curto | Não | Nome do item reservado | — |
-| Participantes | Número | Sim | Não | Validação "corresponde à expressão regular" `/^[1-9][0-9]{0,3}$/` |
-| Necessita de Coffee Break | Botões de opção: Sim (`sim`, padrão) / Não (`nao`) | Sim | Não | — |
-| Itens solicitados | Caixas de seleção: Café, Água, Refrigerante, Suco, Salgados, Doces | Sim, quando visível | Não | Visível se "Necessita de Coffee Break" for igual a `sim` |
-| Observações | Texto longo | Não | Não | — |
+1. Acesse o menu **Administração > Plugins** (`/front/plugin.php`).
+2. Localize **Reservation Coffee Break** e clique no ícone de configuração (ferramenta) para acessar `/plugins/reservationcoffee/front/config.form.php`.
+3. **Provisionamento do Formulário**:
+   - O formulário padrão **"Solicitação de Coffee Break"** com todas as 9 perguntas, visibilidade condicional e destino de chamado condicionado é provisionado automaticamente na instalação.
+   - Caso precise recriá-lo ou restabelecer a ligação, clique no botão **"Provisionar / Restaurar Formulário Padrão"**.
+4. **Seleção de Salas**:
+   - No card **Salas de Reunião Reserváveis**, selecione quais salas (`ReservationItem`) terão oferta de Coffee Break. Segure `Ctrl` (ou `Cmd` no Mac) para selecionar múltiplas salas.
+5. **Formulário e Mapeamento de Perguntas**:
+   - Selecione o formulário desejado (o dropdown carrega as perguntas em tempo real via AJAX).
+   - Confira o mapeamento dos campos (ID da reserva, Solicitante, Data, Horário, Sala, Participantes).
+6. Clique em **Salvar Configurações**. O card de status indicará **"Plugin Ativo e Operacional"** em verde.
 
-As perguntas preenchidas pelo plugin continuam editáveis. "Solicitante", "Data", "Horário de início" e "Sala" são de texto curto porque o GLPI só aceita pré-preenchimento por URL em texto, número, e-mail, texto longo, urgência e tipo de requisição. O tipo nativo "Solicitante" não tem a opção "usuário atual" como padrão. O solicitante do chamado continua sendo, de forma nativa, quem preencheu o Form.
+---
 
-Destino **Chamado** (Ticket):
+### 2. Configuração via Console (Opcional para automações)
 
-- **Categoria:** Administrativo > Coffee Break;
-- **Atribuído a:** grupo Facilities / Copa;
-- **Criação condicionada:** criado apenas se "Necessita de Coffee Break" for igual a `sim`. Se o usuário responder `Não`, o chamado não é aberto;
-- **Título:** `Coffee Break - <Sala> - <Data> <Horário de início> - Reserva #<ID da reserva>`, com as respostas. O plugin substitui esse título pelos dados reais da reserva (veja [Como funciona](#como-funciona)), e o modelo nativo vale se o plugin estiver desativado;
-- **Descrição:** a configuração automática, que lista todas as perguntas respondidas, inclusive participantes e itens.
-
-Ajuste a política de acesso do Form ao público que pode reservar salas.
-
-### 2. IDs no plugin
-
-A configuração fica na tabela nativa de configuração do GLPI, no contexto `plugin:reservationcoffee`:
+A configuração continua armazenada na tabela nativa de configuração do GLPI, sob o contexto `plugin:reservationcoffee`, podendo ser gerida por CLI:
 
 | Chave | Valor |
 | --- | --- |

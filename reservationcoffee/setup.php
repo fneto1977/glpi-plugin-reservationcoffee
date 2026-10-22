@@ -27,7 +27,7 @@
 use Glpi\Form\AnswersSet;
 use Glpi\Plugin\Hooks;
 
-define('PLUGIN_RESERVATIONCOFFEE_VERSION', '0.1.0');
+define('PLUGIN_RESERVATIONCOFFEE_VERSION', '0.2.0');
 
 // Validated on 11.0.4 and 11.0.11; `max` is exclusive.
 define('PLUGIN_RESERVATIONCOFFEE_MIN_GLPI', '11.0.4');
@@ -49,6 +49,8 @@ function plugin_init_reservationcoffee(): void
         AnswersSet::class => 'plugin_reservationcoffee_pre_item_add_answers_set',
         Ticket::class     => 'plugin_reservationcoffee_pre_item_add_ticket',
     ];
+
+    $PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['reservationcoffee'] = 'front/config.form.php';
 
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['reservationcoffee'][] = 'js/pending.js';
 }

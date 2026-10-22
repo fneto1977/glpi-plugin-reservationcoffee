@@ -153,6 +153,14 @@ final class Config
         }
     }
 
+    /**
+     * @param array<string, string> $values
+     */
+    public static function save(array $values): void
+    {
+        GlpiConfig::setConfigurationValues(self::CONTEXT, $values);
+    }
+
     public static function removeAll(): void
     {
         GlpiConfig::deleteConfigurationValues(self::CONTEXT, [

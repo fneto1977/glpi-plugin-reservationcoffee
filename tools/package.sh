@@ -23,7 +23,7 @@ target="${staging}/reservationcoffee"
 mkdir -p "${target}/locales"
 
 cp "${plugin_dir}/setup.php" "${plugin_dir}/hook.php" "${plugin_dir}/LICENSE" "${plugin_dir}/reservationcoffee.xml" "${target}/"
-cp -R "${plugin_dir}/src" "${plugin_dir}/templates" "${plugin_dir}/public" "${target}/"
+cp -R "${plugin_dir}/src" "${plugin_dir}/templates" "${plugin_dir}/public" "${plugin_dir}/front" "${plugin_dir}/ajax" "${target}/"
 cp "${plugin_dir}"/locales/*.po "${plugin_dir}"/locales/*.mo "${target}/locales/"
 cp "${repo_root}/README.md" "${repo_root}/CHANGELOG.md" "${target}/"
 

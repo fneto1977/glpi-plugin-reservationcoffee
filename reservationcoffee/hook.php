@@ -27,11 +27,13 @@
 use GlpiPlugin\Reservationcoffee\Config;
 use GlpiPlugin\Reservationcoffee\Service\CoffeeRequestGuard;
 use GlpiPlugin\Reservationcoffee\Service\CoffeeTicketDetails;
+use GlpiPlugin\Reservationcoffee\Service\FormProvisioner;
 use GlpiPlugin\Reservationcoffee\Service\ReservationListener;
 
 function plugin_reservationcoffee_install(): bool
 {
     Config::installDefaults();
+    FormProvisioner::create()->provisionIfNeeded();
 
     return true;
 }
