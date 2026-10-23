@@ -14,11 +14,11 @@ msgstr ""
 
 #: front/config.form.php:41
 msgid "Reservation Coffee Break"
-msgstr "Solicitar coffee break"
+msgstr "Reserva con Coffee Break"
 
 #: src/Controller/ConfigController.php:140
 msgid "Configuration saved successfully."
-msgstr "Reserva creada correctamente"
+msgstr "Configuración guardada con éxito."
 
 #: src/Controller/ConfigController.php:167
 msgid "Default coffee break form created and configured successfully."
@@ -26,7 +26,7 @@ msgstr "Formulario estándar de coffee break creado y configurado con éxito."
 
 #: src/Controller/ConfigController.php:173
 msgid "The default coffee break form already exists. Associated configuration updated."
-msgstr "El formulario estándar de coffee break ya existe. Se actualizaron las configuraciones asociadas."
+msgstr "El formulario estándar de coffee break ya existe. Las configuraciones asociadas fueron actualizadas."
 
 #: src/Controller/ConfigController.php:179
 #, php-format
@@ -40,7 +40,7 @@ msgstr "Coffee break"
 
 #: src/Service/CoffeeRequestGuard.php:82
 msgid "The coffee break request could not be validated. Please try again later."
-msgstr "No se pudo validar la solicitud de coffee break. Inténtelo de nuevo más tarde."
+msgstr "La solicitud de coffee break no pudo ser validada. Inténtelo de nuevo más tarde."
 
 #: src/Service/CoffeeRequestGuard.php:103
 msgid "The coffee break request is not available at the moment."
@@ -48,15 +48,15 @@ msgstr "La solicitud de coffee break no está disponible en este momento."
 
 #: src/Service/CoffeeRequestGuard.php:112
 msgid "Please provide a valid reservation ID."
-msgstr "Indique un ID de reserva válido."
+msgstr "Proporcione un ID de reserva válido."
 
 #: src/Service/CoffeeRequestGuard.php:121
 msgid "This reservation was not found or does not allow a coffee break request."
-msgstr "No se encontró esta reserva o no permite solicitar coffee break."
+msgstr "Esta reserva no fue encontrada o no permite una solicitud de coffee break."
 
 #: src/Service/CoffeeRequestGuard.php:125
 msgid "A coffee break must be requested at least 48 hours before the meeting starts."
-msgstr "El coffee break debe solicitarse con al menos 48 horas de antelación al inicio de la reunión."
+msgstr "El coffee break debe solicitarse al menos 48 horas antes del inicio de la reunión."
 
 #: src/Service/CoffeeRequestGuard.php:137
 msgid "Please provide a whole number of participants greater than zero."
@@ -70,7 +70,7 @@ msgstr "Coffee Break - %1$s - %2$s - Reserva #%3$d"
 #: src/Service/CoffeeTicketDetails.php:98
 #, php-format
 msgid "Reservation #%d, as booked"
-msgstr "Reserva #%d, según lo registrado"
+msgstr "Reserva #%d, según agendada"
 
 #: src/Service/CoffeeTicketDetails.php:99 templates/offer_coffee.html.twig:32
 msgid "Room"
@@ -102,7 +102,7 @@ msgstr "Formulario estándar de coffee break creado con éxito."
 
 #: templates/config.html.twig:8
 msgid "Coffee Break Reservation Settings"
-msgstr "Coffee Break - %1$s - %2$s - Reserva #%3$d"
+msgstr "Configuración de Reserva con Coffee Break"
 
 #: templates/config.html.twig:11
 msgid "Configure reservable meeting rooms, associate the coffee break form, and map questions for automatic pre-fill."
@@ -138,7 +138,7 @@ msgstr "La pregunta \"ID da reserva\" no está mapeada (obligatoria para validac
 
 #: templates/config.html.twig:55
 msgid "Default Coffee Break Form"
-msgstr "Solicitar coffee break"
+msgstr "Formulario Estándar de Coffee Break"
 
 #: templates/config.html.twig:58
 msgid "Provision or link the standard coffee break form (\"Solicitação de Coffee Break\") with all 9 questions, conditional visibility, and ticket destination."
@@ -158,7 +158,7 @@ msgstr "Seleccione las salas de reuniones que ofrecerán el servicio de coffee b
 
 #: templates/config.html.twig:93
 msgid "Rooms with coffee break offer"
-msgstr "Solicitar coffee break"
+msgstr "Salas con oferta de coffee break"
 
 #: templates/config.html.twig:112
 msgid "Hold Ctrl (or Cmd on Mac) to select multiple rooms."
@@ -170,7 +170,7 @@ msgstr "Formulario y Opciones de Ejecución"
 
 #: templates/config.html.twig:131
 msgid "Coffee Break Form"
-msgstr "Coffee break"
+msgstr "Formulario de Coffee Break"
 
 #: templates/config.html.twig:139
 msgid "Select a form"
@@ -198,7 +198,7 @@ msgstr "Mapee los campos del formulario seleccionado a los atributos correspondi
 
 #: templates/config.html.twig:194
 msgid "Reservation ID (Mandatory)"
-msgstr "ID de la reserva"
+msgstr "ID de la Reserva (Obligatorio)"
 
 #: templates/config.html.twig:202
 msgid "Select a question"
@@ -220,7 +220,7 @@ msgstr "Ninguno / No mapeado"
 
 #: templates/config.html.twig:243
 msgid "Reservation Date (Optional)"
-msgstr "ID de la reserva"
+msgstr "Fecha de la Reserva (Opcional)"
 
 #: templates/config.html.twig:266
 msgid "Start Time (Optional)"
@@ -240,15 +240,15 @@ msgstr "Guardar Configuración"
 
 #: templates/offer_coffee.html.twig:22
 msgid "There is no pending coffee break offer for this reservation."
-msgstr "No hay ninguna oferta de coffee break pendiente para esta reserva."
+msgstr "No hay oferta de coffee break pendiente para esta reserva."
 
 #: templates/offer_coffee.html.twig:27
 msgid "Reservation created successfully"
-msgstr "Reserva creada correctamente"
+msgstr "Reserva creada con éxito"
 
 #: templates/offer_coffee.html.twig:35
 msgid "Period"
-msgstr "Periodo"
+msgstr "Período"
 
 #: templates/offer_coffee.html.twig:37
 msgid "%1$s to %2$s"
@@ -260,7 +260,7 @@ msgstr "ID de la reserva"
 
 #: templates/offer_coffee.html.twig:45
 msgid "Would you like to request a coffee break?"
-msgstr "¿Desea solicitar coffee break?"
+msgstr "¿Desea solicitar un coffee break?"
 
 #: templates/offer_coffee.html.twig:51
 msgid "No, back to the calendar"
@@ -272,7 +272,7 @@ msgstr "Solicitar coffee break"
 
 #: templates/offer_coffee.html.twig:66
 msgid "A coffee break cannot be requested because the meeting starts in less than 48 hours."
-msgstr "No es posible solicitar coffee break porque la reunión empieza en menos de 48 horas."
+msgstr "No se puede solicitar coffee break porque la reunión comienza en menos de 48 horas."
 
 #: templates/offer_coffee.html.twig:71
 msgid "Your reservation is confirmed, but the coffee break request is unavailable right now. You can try again from the service catalog."

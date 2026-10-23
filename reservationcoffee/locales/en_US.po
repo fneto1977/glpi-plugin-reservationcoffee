@@ -14,11 +14,11 @@ msgstr ""
 
 #: front/config.form.php:41
 msgid "Reservation Coffee Break"
-msgstr "Request coffee break"
+msgstr "Coffee Break Reservation"
 
 #: src/Controller/ConfigController.php:140
 msgid "Configuration saved successfully."
-msgstr "Reservation created successfully"
+msgstr "Configuration saved successfully."
 
 #: src/Controller/ConfigController.php:167
 msgid "Default coffee break form created and configured successfully."
@@ -102,7 +102,7 @@ msgstr "Default coffee break form successfully created."
 
 #: templates/config.html.twig:8
 msgid "Coffee Break Reservation Settings"
-msgstr "Coffee Break - %1$s - %2$s - Reservation #%3$d"
+msgstr "Coffee Break Reservation Settings"
 
 #: templates/config.html.twig:11
 msgid "Configure reservable meeting rooms, associate the coffee break form, and map questions for automatic pre-fill."
@@ -138,7 +138,7 @@ msgstr "Question \"ID da reserva\" is not mapped (mandatory for security validat
 
 #: templates/config.html.twig:55
 msgid "Default Coffee Break Form"
-msgstr "Request coffee break"
+msgstr "Default Coffee Break Form"
 
 #: templates/config.html.twig:58
 msgid "Provision or link the standard coffee break form (\"Solicitação de Coffee Break\") with all 9 questions, conditional visibility, and ticket destination."
@@ -158,7 +158,7 @@ msgstr "Select the meeting rooms that will offer the coffee break service when r
 
 #: templates/config.html.twig:93
 msgid "Rooms with coffee break offer"
-msgstr "Request coffee break"
+msgstr "Rooms with coffee break offer"
 
 #: templates/config.html.twig:112
 msgid "Hold Ctrl (or Cmd on Mac) to select multiple rooms."
@@ -170,7 +170,7 @@ msgstr "Form and Execution Options"
 
 #: templates/config.html.twig:131
 msgid "Coffee Break Form"
-msgstr "Coffee break"
+msgstr "Coffee Break Form"
 
 #: templates/config.html.twig:139
 msgid "Select a form"
@@ -198,7 +198,7 @@ msgstr "Map the fields of the selected form to the corresponding reservation and
 
 #: templates/config.html.twig:194
 msgid "Reservation ID (Mandatory)"
-msgstr "Reservation ID"
+msgstr "Reservation ID (Mandatory)"
 
 #: templates/config.html.twig:202
 msgid "Select a question"
@@ -220,7 +220,7 @@ msgstr "None / Not mapped"
 
 #: templates/config.html.twig:243
 msgid "Reservation Date (Optional)"
-msgstr "Reservation ID"
+msgstr "Reservation Date (Optional)"
 
 #: templates/config.html.twig:266
 msgid "Start Time (Optional)"
@@ -276,7 +276,7 @@ msgstr "A coffee break cannot be requested because the meeting starts in less th
 
 #: templates/offer_coffee.html.twig:71
 msgid "Your reservation is confirmed, but the coffee break request is unavailable right now. You can try again from the service catalog."
-msgstr "Your reservation is confirmed, but the coffee break request is unavailable right now. You can try again from the service catalogue."
+msgstr "Your reservation is confirmed, but the coffee break request is unavailable right now. You can try again from the service catalog."
 
 #: templates/offer_coffee.html.twig:77
 msgid "Back to the calendar"
@@ -284,4 +284,4 @@ msgstr "Back to the calendar"
 
 #: templates/offer_coffee.html.twig:81
 msgid "Service catalog"
-msgstr "Service catalogue"
+msgstr "Service catalog"

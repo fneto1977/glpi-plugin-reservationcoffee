@@ -103,5 +103,14 @@ test.describe('Admin Configuration UI', () => {
     await expect(admin.locator('#btn-save-config')).toContainText(/Salvar|Save/i);
     await expect(admin.locator('#btn-provision-default-form')).toContainText(/Provisionar|Provision/i);
     await expect(admin.getByText(/Salas de Reunião Reserváveis|Reservable Meeting Rooms/i).first()).toBeVisible();
+
+    // Verify header title does not contain format string placeholders
+    const pageTitle = admin.locator('.page-title');
+    await expect(pageTitle).not.toContainText('%1$s');
+    await expect(pageTitle).toContainText(/Configurações.*Coffee Break|Coffee Break Reservation Settings/i);
+
+    // Verify distinct label for Reservation Date question (not duplicated as Reservation ID)
+    await expect(admin.getByText(/Data da Reserva \(Opcional\)|Reservation Date \(Optional\)/i).first()).toBeVisible();
+    await expect(admin.getByText(/ID da Reserva \(Obrigatório\)|Reservation ID \(Mandatory\)/i).first()).toBeVisible();
   });
 });
