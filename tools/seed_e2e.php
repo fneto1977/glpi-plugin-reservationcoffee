@@ -194,6 +194,10 @@ function seed_id_list(string $name): array
  */
 function seed_question(int $sectionId, string $name, array $attributes, array $previousNames = []): Question
 {
+    if (array_key_exists('extra_data', $attributes) && $attributes['extra_data'] === '') {
+        $attributes['extra_data'] = null;
+    }
+
     $question = new Question();
     foreach ([$name, ...$previousNames] as $candidate) {
         if ($question->getFromDBByCrit(['forms_sections_id' => $sectionId, 'name' => $candidate])) {
@@ -234,7 +238,7 @@ function seed_coffee_form_questions(int $sectionId): array
         'is_mandatory'          => $mandatory ? 1 : 0,
         'description'           => $description,
         'default_value'         => '',
-        'extra_data'            => '',
+        'extra_data'            => null,
         'visibility_strategy'   => VisibilityStrategy::ALWAYS_VISIBLE->value,
         '_conditions'           => [],
         'validation_strategy'   => ValidationStrategy::NO_VALIDATION->value,

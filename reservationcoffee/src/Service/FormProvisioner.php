@@ -46,6 +46,7 @@ use Glpi\Form\Destination\CommonITILField\TitleField;
 use Glpi\Form\Destination\FormDestination;
 use Glpi\Form\Destination\FormDestinationTicket;
 use Glpi\Form\Form;
+use Glpi\Form\FormTranslation;
 use Glpi\Form\Question;
 use Glpi\Form\QuestionType\QuestionTypeCheckbox;
 use Glpi\Form\QuestionType\QuestionTypeLongText;
@@ -60,6 +61,7 @@ use GlpiPlugin\Reservationcoffee\Domain\FormProvisionResult;
 use GlpiPlugin\Reservationcoffee\Domain\FormProvisionStatus;
 use Group;
 use ITILCategory;
+use QuerySubQuery;
 use RuntimeException;
 use Throwable;
 
@@ -84,7 +86,10 @@ final class FormProvisioner
             $form = new Form();
             if ($form->getFromDBByCrit(['name' => self::DEFAULT_FORM_NAME])) {
                 $formId = (int) $form->getID();
-                $questionIds = $this->resolveExistingQuestionIds($formId);
+                $this->sanitizeExtraData($formId);
+                $questions = $this->loadQuestionsByLogicalKey($formId);
+                $this->provisionFormTranslations($formId, $questions);
+                $questionIds = array_map(static fn(Question $q): int => (int) $q->getID(), $questions);
                 $this->syncConfigIfUnset($formId, $questionIds);
 
                 return new FormProvisionResult(
@@ -145,7 +150,9 @@ final class FormProvisioner
         $sectionId = (int) $section->getID();
 
         $questions = $this->createQuestions($sectionId);
+        $this->sanitizeExtraData($formId);
         $this->configureDestination($formId, $questions, $entityId);
+        $this->provisionFormTranslations($formId, $questions);
 
         $questionIds = array_map(static fn(Question $q): int => (int) $q->getID(), $questions);
         $this->saveConfig($formId, $questionIds);
@@ -169,7 +176,7 @@ final class FormProvisioner
             'is_mandatory'           => $mandatory ? 1 : 0,
             'description'            => $description,
             'default_value'          => '',
-            'extra_data'             => '',
+            'extra_data'             => null,
             'visibility_strategy'    => VisibilityStrategy::ALWAYS_VISIBLE->value,
             '_conditions'            => [],
             'validation_strategy'    => ValidationStrategy::NO_VALIDATION->value,
@@ -240,6 +247,10 @@ final class FormProvisioner
      */
     private function upsertQuestion(int $sectionId, string $name, array $attributes, array $previousNames = []): Question
     {
+        if (array_key_exists('extra_data', $attributes) && $attributes['extra_data'] === '') {
+            $attributes['extra_data'] = null;
+        }
+
         $question = new Question();
         foreach ([$name, ...$previousNames] as $candidate) {
             if ($question->getFromDBByCrit(['forms_sections_id' => $sectionId, 'name' => $candidate])) {
@@ -437,5 +448,257 @@ final class FormProvisioner
         }
 
         Config::save($values);
+    }
+
+    /**
+     * @return array<string, Question>
+     */
+    public function loadQuestionsByLogicalKey(int $formId): array
+    {
+        $questions = [];
+        foreach ($this->resolveExistingQuestionIds($formId) as $key => $id) {
+            $question = Question::getById($id);
+            if ($question instanceof Question) {
+                $questions[$key] = $question;
+            }
+        }
+
+        return $questions;
+    }
+
+    public function sanitizeExtraData(int $formId): void
+    {
+        global $DB;
+
+        if ($formId <= 0 || !$DB) {
+            return;
+        }
+
+        $DB->update(
+            Question::getTable(),
+            ['extra_data' => null],
+            [
+                'forms_sections_id' => new QuerySubQuery([
+                    'SELECT' => 'id',
+                    'FROM'   => Section::getTable(),
+                    'WHERE'  => ['forms_forms_id' => $formId],
+                ]),
+                'extra_data' => '',
+            ]
+        );
+    }
+
+    /**
+     * @param array<string, Question> $questions
+     */
+    public function provisionFormTranslations(int $formId, array $questions): void
+    {
+        if ($formId <= 0 || !class_exists(FormTranslation::class)) {
+            return;
+        }
+
+        $languages = ['en_GB', 'en_US', 'pt_BR', 'es_ES'];
+
+        $formStrings = [
+            'form_name' => [
+                'en_GB' => 'Coffee Break Request',
+                'en_US' => 'Coffee Break Request',
+                'es_ES' => 'Solicitud de Coffee Break',
+                'pt_BR' => 'Solicitação de Coffee Break',
+            ],
+            'form_header' => [
+                'en_GB' => 'Request a coffee break for your meeting (minimum 48 hours notice).',
+                'en_US' => 'Request a coffee break for your meeting (minimum 48 hours notice).',
+                'es_ES' => 'Solicite el coffee break para su reunión (mínimo 48 horas de antelación).',
+                'pt_BR' => 'Solicite o Coffee Break para a sua reunião (mínimo de 48 horas de antecedência).',
+            ],
+        ];
+
+        foreach ($formStrings as $key => $byLang) {
+            foreach ($languages as $lang) {
+                if (isset($byLang[$lang])) {
+                    $this->upsertTranslation(Form::class, $formId, $key, $lang, $byLang[$lang]);
+                }
+            }
+        }
+
+        $questionTranslations = [
+            'reservation_id' => [
+                'question_name' => [
+                    'en_GB' => 'Reservation ID',
+                    'en_US' => 'Reservation ID',
+                    'es_ES' => 'ID de la reserva',
+                    'pt_BR' => 'ID da reserva',
+                ],
+            ],
+            'requester' => [
+                'question_name' => [
+                    'en_GB' => 'Requester',
+                    'en_US' => 'Requester',
+                    'es_ES' => 'Solicitante',
+                    'pt_BR' => 'Solicitante',
+                ],
+            ],
+            'date' => [
+                'question_name' => [
+                    'en_GB' => 'Date',
+                    'en_US' => 'Date',
+                    'es_ES' => 'Fecha',
+                    'pt_BR' => 'Data',
+                ],
+            ],
+            'start_time' => [
+                'question_name' => [
+                    'en_GB' => 'Start time',
+                    'en_US' => 'Start time',
+                    'es_ES' => 'Hora de inicio',
+                    'pt_BR' => 'Horário de início',
+                ],
+            ],
+            'room' => [
+                'question_name' => [
+                    'en_GB' => 'Room',
+                    'en_US' => 'Room',
+                    'es_ES' => 'Sala',
+                    'pt_BR' => 'Sala',
+                ],
+            ],
+            'participants' => [
+                'question_name' => [
+                    'en_GB' => 'Participants',
+                    'en_US' => 'Participants',
+                    'es_ES' => 'Participantes',
+                    'pt_BR' => 'Participantes',
+                ],
+                'question_description' => [
+                    'en_GB' => 'Whole number greater than zero.',
+                    'en_US' => 'Whole number greater than zero.',
+                    'es_ES' => 'Número entero mayor que cero.',
+                    'pt_BR' => 'Número inteiro maior que zero.',
+                ],
+            ],
+            'needs_coffee' => [
+                'question_name' => [
+                    'en_GB' => 'Requires Coffee Break',
+                    'en_US' => 'Requires Coffee Break',
+                    'es_ES' => '¿Requiere Coffee Break?',
+                    'pt_BR' => 'Necessita de Coffee Break',
+                ],
+                'option-sim' => [
+                    'en_GB' => 'Yes',
+                    'en_US' => 'Yes',
+                    'es_ES' => 'Sí',
+                    'pt_BR' => 'Sim',
+                ],
+                'option-nao' => [
+                    'en_GB' => 'No',
+                    'en_US' => 'No',
+                    'es_ES' => 'No',
+                    'pt_BR' => 'Não',
+                ],
+            ],
+            'items' => [
+                'question_name' => [
+                    'en_GB' => 'Requested items',
+                    'en_US' => 'Requested items',
+                    'es_ES' => 'Artículos solicitados',
+                    'pt_BR' => 'Itens solicitados',
+                ],
+                'option-cafe' => [
+                    'en_GB' => 'Coffee',
+                    'en_US' => 'Coffee',
+                    'es_ES' => 'Café',
+                    'pt_BR' => 'Café',
+                ],
+                'option-agua' => [
+                    'en_GB' => 'Water',
+                    'en_US' => 'Water',
+                    'es_ES' => 'Agua',
+                    'pt_BR' => 'Água',
+                ],
+                'option-refrigerante' => [
+                    'en_GB' => 'Soda',
+                    'en_US' => 'Soda',
+                    'es_ES' => 'Refresco',
+                    'pt_BR' => 'Refrigerante',
+                ],
+                'option-suco' => [
+                    'en_GB' => 'Juice',
+                    'en_US' => 'Juice',
+                    'es_ES' => 'Jugo',
+                    'pt_BR' => 'Suco',
+                ],
+                'option-salgados' => [
+                    'en_GB' => 'Savory snacks',
+                    'en_US' => 'Savory snacks',
+                    'es_ES' => 'Bocadillos salados',
+                    'pt_BR' => 'Salgados',
+                ],
+                'option-doces' => [
+                    'en_GB' => 'Sweet snacks',
+                    'en_US' => 'Sweet snacks',
+                    'es_ES' => 'Dulces',
+                    'pt_BR' => 'Doces',
+                ],
+            ],
+            'notes' => [
+                'question_name' => [
+                    'en_GB' => 'Notes',
+                    'en_US' => 'Notes',
+                    'es_ES' => 'Observaciones',
+                    'pt_BR' => 'Observações',
+                ],
+            ],
+        ];
+
+        foreach ($questionTranslations as $logicalKey => $fields) {
+            if (!isset($questions[$logicalKey])) {
+                continue;
+            }
+            $questionId = (int) $questions[$logicalKey]->getID();
+            if ($questionId <= 0) {
+                continue;
+            }
+
+            foreach ($fields as $key => $byLang) {
+                foreach ($languages as $lang) {
+                    if (isset($byLang[$lang])) {
+                        $this->upsertTranslation(Question::class, $questionId, $key, $lang, $byLang[$lang]);
+                    }
+                }
+            }
+        }
+    }
+
+    private function upsertTranslation(string $itemtype, int $itemsId, string $key, string $language, string $value): void
+    {
+        if ($itemsId <= 0 || !class_exists(FormTranslation::class)) {
+            return;
+        }
+
+        $translation = new FormTranslation();
+        if ($translation->getFromDBByCrit([
+            'itemtype' => $itemtype,
+            'items_id' => $itemsId,
+            'key'      => $key,
+            'language' => $language,
+        ])) {
+            $translation->update([
+                'id'           => $translation->getID(),
+                'itemtype'     => $itemtype,
+                'items_id'     => $itemsId,
+                'key'          => $key,
+                'translations' => ['one' => $value],
+            ]);
+            return;
+        }
+
+        $translation->add([
+            'itemtype'     => $itemtype,
+            'items_id'     => $itemsId,
+            'key'          => $key,
+            'language'     => $language,
+            'translations' => ['one' => $value],
+        ]);
     }
 }

@@ -8,6 +8,7 @@ use Glpi\Form\Condition\CreationStrategy;
 use Glpi\Form\Destination\FormDestination;
 use Glpi\Form\Destination\FormDestinationTicket;
 use Glpi\Form\Form;
+use Glpi\Form\FormTranslation;
 use Glpi\Form\Question;
 use GlpiPlugin\Reservationcoffee\Config;
 use GlpiPlugin\Reservationcoffee\Domain\FormProvisionStatus;
@@ -28,6 +29,31 @@ final class FormProvisionerTest extends IntegrationTestCase
         self::assertArrayHasKey('reservation_id', $result->questionIds);
         self::assertArrayHasKey('needs_coffee', $result->questionIds);
         self::assertArrayHasKey('items', $result->questionIds);
+
+        // Verify FormTranslation records were provisioned
+        $translation = new FormTranslation();
+        self::assertTrue((bool) $translation->getFromDBByCrit([
+            'itemtype' => Form::class,
+            'items_id' => $existingFormId,
+            'key'      => 'form_name',
+            'language' => 'en_GB',
+        ]));
+        self::assertSame(['one' => 'Coffee Break Request'], json_decode($translation->fields['translations'], true));
+
+        $needsCoffeeQId = $result->questionIds['needs_coffee'];
+        self::assertTrue((bool) $translation->getFromDBByCrit([
+            'itemtype' => Question::class,
+            'items_id' => $needsCoffeeQId,
+            'key'      => 'option-sim',
+            'language' => 'en_GB',
+        ]));
+        self::assertSame(['one' => 'Yes'], json_decode($translation->fields['translations'], true));
+
+        // Verify no questions have empty string extra_data
+        foreach ($result->questionIds as $qId) {
+            $q = Question::getById($qId);
+            self::assertNotSame('', $q->fields['extra_data']);
+        }
     }
 
     public function testCreatesFormWhenNotFound(): void
