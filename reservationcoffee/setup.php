@@ -52,7 +52,8 @@ function plugin_init_reservationcoffee(): void
 
     $PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['reservationcoffee'] = 'front/config.form.php';
 
-    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['reservationcoffee'][] = 'js/pending.js';
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['reservationcoffee'][]                = 'js/pending.js';
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT_ANONYMOUS_PAGE]['reservationcoffee'][] = 'js/pending.js';
 }
 
 /**

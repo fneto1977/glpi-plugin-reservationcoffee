@@ -10,6 +10,7 @@ use Glpi\Form\Destination\FormDestinationTicket;
 use Glpi\Form\Form;
 use Glpi\Form\FormTranslation;
 use Glpi\Form\Question;
+use Glpi\Form\QuestionType\QuestionTypeDateTime;
 use GlpiPlugin\Reservationcoffee\Config;
 use GlpiPlugin\Reservationcoffee\Domain\FormProvisionStatus;
 use GlpiPlugin\Reservationcoffee\Service\FormProvisioner;
@@ -48,6 +49,19 @@ final class FormProvisionerTest extends IntegrationTestCase
             'language' => 'en_GB',
         ]));
         self::assertSame(['one' => 'Yes'], json_decode($translation->fields['translations'], true));
+
+        // Verify date and time question types
+        $dateQ = Question::getById($result->questionIds['date']);
+        self::assertSame(QuestionTypeDateTime::class, $dateQ->fields['type']);
+        $dateExtra = json_decode($dateQ->fields['extra_data'], true);
+        self::assertSame(1, $dateExtra['is_date_enabled']);
+        self::assertSame(0, $dateExtra['is_time_enabled']);
+
+        $timeQ = Question::getById($result->questionIds['start_time']);
+        self::assertSame(QuestionTypeDateTime::class, $timeQ->fields['type']);
+        $timeExtra = json_decode($timeQ->fields['extra_data'], true);
+        self::assertSame(0, $timeExtra['is_date_enabled']);
+        self::assertSame(1, $timeExtra['is_time_enabled']);
 
         // Verify no questions have empty string extra_data
         foreach ($result->questionIds as $qId) {
@@ -102,6 +116,9 @@ final class FormProvisionerTest extends IntegrationTestCase
                 $q = Question::getById($result->questionIds[$key]);
                 self::assertInstanceOf(Question::class, $q);
             }
+
+            self::assertSame(QuestionTypeDateTime::class, Question::getById($result->questionIds['date'])->fields['type']);
+            self::assertSame(QuestionTypeDateTime::class, Question::getById($result->questionIds['start_time'])->fields['type']);
 
             // Verify ticket destination with condition
             $destination = new FormDestination();

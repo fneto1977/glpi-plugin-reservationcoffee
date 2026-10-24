@@ -87,7 +87,7 @@ final class CoffeeFormLink
     {
         return [
             Config::KEY_REQUESTER_QUESTION_ID => $requesterName,
-            Config::KEY_DATE_QUESTION_ID      => (string) Html::convDate($context->rawBegin),
+            Config::KEY_DATE_QUESTION_ID      => substr($context->rawBegin, 0, 10),
             Config::KEY_TIME_QUESTION_ID      => substr($context->rawBegin, 11, 5),
             Config::KEY_ROOM_QUESTION_ID      => $context->roomName,
         ];

@@ -41,6 +41,7 @@ use Glpi\Form\Destination\FormDestinationTicket;
 use Glpi\Form\Form;
 use Glpi\Form\Question;
 use Glpi\Form\QuestionType\QuestionTypeCheckbox;
+use Glpi\Form\QuestionType\QuestionTypeDateTime;
 use Glpi\Form\QuestionType\QuestionTypeLongText;
 use Glpi\Form\QuestionType\QuestionTypeNumber;
 use Glpi\Form\QuestionType\QuestionTypeRadio;
@@ -248,8 +249,14 @@ function seed_coffee_form_questions(int $sectionId): array
     $questions = [];
     $questions['reservation_id'] = seed_question($sectionId, 'ID da reserva', $plain(QuestionTypeNumber::class, 0, true));
     $questions['requester'] = seed_question($sectionId, 'Solicitante', $plain(QuestionTypeShortText::class, 1, false));
-    $questions['date'] = seed_question($sectionId, 'Data', $plain(QuestionTypeShortText::class, 2, false));
-    $questions['start_time'] = seed_question($sectionId, 'Horário de início', $plain(QuestionTypeShortText::class, 3, false));
+    $questions['date'] = seed_question($sectionId, 'Data', [
+        'type'       => QuestionTypeDateTime::class,
+        'extra_data' => json_encode(['is_default_value_current_time' => 0, 'is_date_enabled' => 1, 'is_time_enabled' => 0], JSON_THROW_ON_ERROR),
+    ] + $plain(QuestionTypeDateTime::class, 2, false));
+    $questions['start_time'] = seed_question($sectionId, 'Horário de início', [
+        'type'       => QuestionTypeDateTime::class,
+        'extra_data' => json_encode(['is_default_value_current_time' => 0, 'is_date_enabled' => 0, 'is_time_enabled' => 1], JSON_THROW_ON_ERROR),
+    ] + $plain(QuestionTypeDateTime::class, 3, false));
     $questions['room'] = seed_question($sectionId, 'Sala', $plain(QuestionTypeShortText::class, 4, false));
     $questions['participants'] = seed_question(
         $sectionId,

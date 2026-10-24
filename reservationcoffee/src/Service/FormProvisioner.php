@@ -49,6 +49,7 @@ use Glpi\Form\Form;
 use Glpi\Form\FormTranslation;
 use Glpi\Form\Question;
 use Glpi\Form\QuestionType\QuestionTypeCheckbox;
+use Glpi\Form\QuestionType\QuestionTypeDateTime;
 use Glpi\Form\QuestionType\QuestionTypeLongText;
 use Glpi\Form\QuestionType\QuestionTypeNumber;
 use Glpi\Form\QuestionType\QuestionTypeRadio;
@@ -87,6 +88,7 @@ final class FormProvisioner
             if ($form->getFromDBByCrit(['name' => self::DEFAULT_FORM_NAME])) {
                 $formId = (int) $form->getID();
                 $this->sanitizeExtraData($formId);
+                $this->upgradeQuestionsIfNeeded($formId);
                 $questions = $this->loadQuestionsByLogicalKey($formId);
                 $this->provisionFormTranslations($formId, $questions);
                 $questionIds = array_map(static fn(Question $q): int => (int) $q->getID(), $questions);
@@ -186,8 +188,14 @@ final class FormProvisioner
         $questions = [];
         $questions['reservation_id'] = $this->upsertQuestion($sectionId, 'ID da reserva', $plain(QuestionTypeNumber::class, 0, true));
         $questions['requester']      = $this->upsertQuestion($sectionId, 'Solicitante', $plain(QuestionTypeShortText::class, 1, false));
-        $questions['date']           = $this->upsertQuestion($sectionId, 'Data', $plain(QuestionTypeShortText::class, 2, false));
-        $questions['start_time']     = $this->upsertQuestion($sectionId, 'Horário de início', $plain(QuestionTypeShortText::class, 3, false));
+        $questions['date']           = $this->upsertQuestion($sectionId, 'Data', [
+            'type'       => QuestionTypeDateTime::class,
+            'extra_data' => $this->encodeDateTimeOptions(dateEnabled: true, timeEnabled: false),
+        ] + $plain(QuestionTypeDateTime::class, 2, false));
+        $questions['start_time']     = $this->upsertQuestion($sectionId, 'Horário de início', [
+            'type'       => QuestionTypeDateTime::class,
+            'extra_data' => $this->encodeDateTimeOptions(dateEnabled: false, timeEnabled: true),
+        ] + $plain(QuestionTypeDateTime::class, 3, false));
         $questions['room']           = $this->upsertQuestion($sectionId, 'Sala', $plain(QuestionTypeShortText::class, 4, false));
         $questions['participants']   = $this->upsertQuestion(
             $sectionId,
@@ -273,6 +281,44 @@ final class FormProvisioner
     private function encodeOptions(array $options): string
     {
         return json_encode([QuestionTypeSelectableExtraDataConfig::OPTIONS => $options], JSON_THROW_ON_ERROR);
+    }
+
+    public function encodeDateTimeOptions(bool $dateEnabled, bool $timeEnabled): string
+    {
+        return json_encode([
+            'is_default_value_current_time' => 0,
+            'is_date_enabled'               => $dateEnabled ? 1 : 0,
+            'is_time_enabled'               => $timeEnabled ? 1 : 0,
+        ], JSON_THROW_ON_ERROR);
+    }
+
+    public function upgradeQuestionsIfNeeded(int $formId): void
+    {
+        $questions = $this->loadQuestionsByLogicalKey($formId);
+
+        if (isset($questions['date'])) {
+            $dateQ = $questions['date'];
+            $expectedExtra = $this->encodeDateTimeOptions(dateEnabled: true, timeEnabled: false);
+            if ($dateQ->fields['type'] !== QuestionTypeDateTime::class || $dateQ->fields['extra_data'] !== $expectedExtra) {
+                $dateQ->update([
+                    'id'         => $dateQ->getID(),
+                    'type'       => QuestionTypeDateTime::class,
+                    'extra_data' => $expectedExtra,
+                ]);
+            }
+        }
+
+        if (isset($questions['start_time'])) {
+            $timeQ = $questions['start_time'];
+            $expectedExtra = $this->encodeDateTimeOptions(dateEnabled: false, timeEnabled: true);
+            if ($timeQ->fields['type'] !== QuestionTypeDateTime::class || $timeQ->fields['extra_data'] !== $expectedExtra) {
+                $timeQ->update([
+                    'id'         => $timeQ->getID(),
+                    'type'       => QuestionTypeDateTime::class,
+                    'extra_data' => $expectedExtra,
+                ]);
+            }
+        }
     }
 
     /**

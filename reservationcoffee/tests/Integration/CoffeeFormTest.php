@@ -130,7 +130,7 @@ final class CoffeeFormTest extends IntegrationTestCase
         $expected = [
             'ID da reserva'     => (string) $context->reservationId,
             'Solicitante'       => 'Pessoa E2E',
-            'Data'              => Html::convDate($begin->format('Y-m-d')),
+            'Data'              => $begin->format('Y-m-d'),
             'Horário de início' => $begin->format('H:i'),
             'Sala'              => self::ROOM,
         ];
